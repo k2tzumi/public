@@ -20,5 +20,5 @@
     },
     "require-dev": {
         "ext-pcntl": "*"
-    },
+    }
 }
