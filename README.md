@@ -2,6 +2,7 @@
 [FirePHP](https://github.com/firephp/firephp-core) ported to Go.
 
 It partially implements the [FirePHP Protocol](http://www.firephp.org/Wiki/Reference/Protocol), supporting:
+
 1. Log
 2. Info
 3. Warn
@@ -13,5 +14,5 @@ Also, it does not analyse the backtrace to feed the information with extra infor
 
 [Check the example to see it working](examples/example.go):
 
-`# go run examples/example`
+`# go run examples/example.go`
 
