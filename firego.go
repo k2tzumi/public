@@ -18,12 +18,18 @@ package firego
 
 //go:generate stringer -type=MessageType
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
+)
+
+const (
+	CHUNK_SIZE = 4096
 )
 
 type message struct {
@@ -67,7 +73,6 @@ func (f *FireGo) Error(content string) {
 	f.Message(Error, content)
 }
 
-//todo(ccirello): count finalJson size, and chunk message size into smaller calls;
 func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	messages := f.messages
@@ -78,23 +83,50 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	headerCount := newHeaderCounter()
+
 	headers := w.Header()
 	headers.Set(`X-Wf-Protocol-1`, `http://meta.wildfirehq.org/Protocol/JsonStream/0.2`)
 	headers.Set(`X-Wf-1-Plugin-1`, `http://meta.firephp.org/Wildfire/Plugin/FirePHP/Library-FirePHPCore/0.3`)
 	headers.Set(`X-Wf-1-Structure-1`, `http://meta.firephp.org/Wildfire/Structure/FirePHP/FirebugConsole/0.1`)
 
-	headerCount := 1
 	for _, v := range messages {
-		header := fmt.Sprintf("X-Wf-1-1-1-%d", headerCount)
-
 		msgType := &struct{ Type string }{Type: v.t.String()}
 		response := []interface{}{msgType, v.content}
 
 		responseBytes, _ := json.Marshal(response)
-		finalJson := string(responseBytes)
+		lenResponse := len(responseBytes)
+		log.Println(string(responseBytes), lenResponse, CHUNK_SIZE)
+		if lenResponse < CHUNK_SIZE {
+			headers.Set(headerCount.generate(), strconv.Itoa(lenResponse)+`|`+string(responseBytes)+`|`)
+			continue
+		}
 
-		headers.Set(header, strconv.Itoa(len(finalJson))+`|`+finalJson+`|`)
+		buf := bytes.NewBuffer(responseBytes)
+		chunk := buf.Next(CHUNK_SIZE)
+		headers.Set(headerCount.generate(), strconv.Itoa(lenResponse)+`|`+string(chunk)+`|\`)
+		for {
+			chunk := buf.Next(CHUNK_SIZE)
+			if len(chunk) == 0 {
+				break
+			}
+			body := `|` + string(chunk) + `|`
+			if len(chunk) == CHUNK_SIZE {
+				body = body + `\`
+			}
+			headers.Set(headerCount.generate(), body)
 
-		headerCount++
+		}
 	}
+}
+
+type headCounter int
+
+func newHeaderCounter() *headCounter {
+	return new(headCounter)
+}
+
+func (h *headCounter) generate() string {
+	*h++
+	return fmt.Sprintf("X-Wf-1-1-1-%d", *h)
 }
