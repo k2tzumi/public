@@ -66,8 +66,9 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 	headers.Set(`X-Wf-1-Plugin-1`, `http://meta.firephp.org/Wildfire/Plugin/FirePHP/Library-FirePHPCore/0.3`)
 	headers.Set(`X-Wf-1-Structure-1`, `http://meta.firephp.org/Wildfire/Structure/FirePHP/FirebugConsole/0.1`)
 
-	for i, v := range messages {
-		header := fmt.Sprintf("X-Wf-1-1-1-%d", i+1)
+	headerCount := 1
+	for _, v := range messages {
+		header := fmt.Sprintf("X-Wf-1-1-1-%d", headerCount)
 
 		msgType := &struct{ Type string }{Type: v.t.String()}
 		response := []interface{}{msgType, v.content}
@@ -79,5 +80,7 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 			header,
 			strconv.Itoa(len(finalJson))+`|`+finalJson+`|`,
 		)
+
+		headerCount++
 	}
 }
