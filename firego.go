@@ -1,6 +1,22 @@
-//go:generate stringer -type=MessageType
+// FireGo
+// FirePHP ported to Go.
+//
+// It partially implements the FirePHP Protocol, supporting:
+//
+// Log
+// Info
+// Warn
+// Error
+// The TRACE, EXCEPTION, TABLE and GROUP are not implemented - I still need to understand whether it is desirable and possible to port these message types.
+//
+// Also, it does not analyse the backtrace to feed the information with extra information such filename and line. http://golang.org/pkg/runtime/#Stack should do the trick.
+//
+// Check the example to see it working:
+//
+// # go run examples/example.go
 package firego
 
+//go:generate stringer -type=MessageType
 import (
 	"encoding/json"
 	"fmt"
@@ -51,6 +67,7 @@ func (f *FireGo) Error(content string) {
 	f.Message(Error, content)
 }
 
+//todo(ccirello): count finalJson size, and chunk message size into smaller calls;
 func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	messages := f.messages
