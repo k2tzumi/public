@@ -93,10 +93,7 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 		responseBytes, _ := json.Marshal(response)
 		finalJson := string(responseBytes)
 
-		headers.Set(
-			header,
-			strconv.Itoa(len(finalJson))+`|`+finalJson+`|`,
-		)
+		headers.Set(header, strconv.Itoa(len(finalJson))+`|`+finalJson+`|`)
 
 		headerCount++
 	}
