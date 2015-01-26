@@ -70,15 +70,14 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 		header := fmt.Sprintf("X-Wf-1-1-1-%d", i+1)
 
 		msgType := &struct{ Type string }{Type: v.t.String()}
-		msgTypeBytes, _ := json.Marshal(msgType)
-		msgTypeString := string(msgTypeBytes)
+		response := []interface{}{msgType, v.content}
 
-		contentBytes, _ := json.Marshal(v.content)
-		content := string(contentBytes)
+		responseBytes, _ := json.Marshal(response)
+		finalJson := string(responseBytes)
 
 		headers.Set(
 			header,
-			strconv.Itoa(len(msgTypeString)+len(content)+3)+`|[`+msgTypeString+`,`+content+`]|`,
+			strconv.Itoa(len(finalJson))+`|`+finalJson+`|`,
 		)
 	}
 }
