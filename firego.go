@@ -34,7 +34,7 @@ const (
 
 type message struct {
 	t       MessageType
-	content string
+	content interface{}
 }
 
 type FireGo struct {
@@ -50,7 +50,7 @@ func New() *FireGo {
 	return fireGo
 }
 
-func (f *FireGo) Message(t MessageType, content string) {
+func (f *FireGo) Message(t MessageType, content interface{}) {
 	msg := message{
 		t:       t,
 		content: content,
@@ -71,6 +71,9 @@ func (f *FireGo) Warn(content string) {
 }
 func (f *FireGo) Error(content string) {
 	f.Message(Error, content)
+}
+func (f *FireGo) Table(content [][]string) {
+	f.Message(Table, content)
 }
 
 func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {

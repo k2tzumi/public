@@ -14,6 +14,10 @@ type Application struct {
 
 func (a *Application) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.Message(firego.Log, "Message from FireGo")
+	a.Table([][]string{
+		[]string{"test", "test2"},
+		[]string{"test3", "test4"},
+	})
 	a.Flush(w, r)
 
 	fmt.Fprintf(w, "APPa: Hi there, I love %s!", r.URL.Path[1:])

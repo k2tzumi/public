@@ -4,9 +4,9 @@ package firego
 
 import "fmt"
 
-const _MessageType_name = "LogInfoWarnError"
+const _MessageType_name = "LogInfoWarnErrorTable"
 
-var _MessageType_index = [...]uint8{0, 3, 7, 11, 16}
+var _MessageType_index = [...]uint8{0, 3, 7, 11, 16, 21}
 
 func (i MessageType) String() string {
 	if i < 0 || i+1 >= MessageType(len(_MessageType_index)) {

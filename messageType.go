@@ -7,4 +7,5 @@ const (
 	Info
 	Warn
 	Error
+	Table
 )
