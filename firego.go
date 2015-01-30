@@ -35,6 +35,7 @@ const (
 type message struct {
 	t       MessageType
 	content interface{}
+	label   string
 }
 
 type FireGo struct {
@@ -51,9 +52,17 @@ func New() *FireGo {
 }
 
 func (f *FireGo) Message(t MessageType, content interface{}) {
-	msg := message{
-		t:       t,
-		content: content,
+	var msg message
+	if t == GroupStart {
+		msg = message{
+			t:     t,
+			label: content.(string),
+		}
+	} else {
+		msg = message{
+			t:       t,
+			content: content,
+		}
 	}
 	f.mu.Lock()
 	f.messages = append(f.messages, msg)
@@ -75,6 +84,12 @@ func (f *FireGo) Error(content string) {
 func (f *FireGo) Table(content [][]string) {
 	f.Message(Table, content)
 }
+func (f *FireGo) GroupStart(label string) {
+	f.Message(GroupStart, label)
+}
+func (f *FireGo) GroupEnd() {
+	f.Message(GroupEnd, nil)
+}
 
 func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
@@ -94,7 +109,13 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 	headers.Set(`X-Wf-1-Structure-1`, `http://meta.firephp.org/Wildfire/Structure/FirePHP/FirebugConsole/0.1`)
 
 	for _, v := range messages {
-		msgType := &struct{ Type string }{Type: v.t.String()}
+		msgType := &struct {
+			Type  string
+			Label string
+		}{
+			Type:  v.t.String(),
+			Label: v.label,
+		}
 		response := []interface{}{msgType, v.content}
 
 		responseBytes, _ := json.Marshal(response)
@@ -118,7 +139,6 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 				body = body + `\`
 			}
 			headers.Set(headerCount.generate(), body)
-
 		}
 	}
 }

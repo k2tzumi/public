@@ -18,6 +18,9 @@ func (a *Application) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		[]string{"test", "test2"},
 		[]string{"test3", "test4"},
 	})
+	a.GroupStart("Group Name")
+	a.Log("Message from FireGo in Group")
+	a.GroupEnd()
 	a.Flush(w, r)
 
 	fmt.Fprintf(w, "APPa: Hi there, I love %s!", r.URL.Path[1:])
