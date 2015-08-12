@@ -26,16 +26,17 @@ function cofunc(callable $fn) {
 	$pid = pcntl_fork();
 	if (-1 == $pid) {
 		trigger_error('could not fork', E_ERROR);
-	} elseif ($pid) {
-		// I am the parent
-	} else {
-		$params = [];
-		if (func_num_args() > 1) {
-			$params = array_slice(func_get_args(), 1);
-		}
-		call_user_func_array($fn, $params);
-		die();
 	}
+	if ($pid) {
+		pcntl_signal(SIGCHLD, SIG_IGN);
+		return;
+	}
+	$params = [];
+	if (func_num_args() > 1) {
+		$params = array_slice(func_get_args(), 1);
+	}
+	call_user_func_array($fn, $params);
+	die();
 }
 
 class CSP_Channel {
