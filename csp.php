@@ -162,6 +162,9 @@ class Message {
 	}
 
 	public function fetch() {
+		if (!shm_has_var($this->shm, 1)) {
+			return;
+		}
 		$ret = shm_get_var($this->shm, 1);
 		$this->destroy();
 		return $ret;
