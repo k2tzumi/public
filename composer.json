@@ -1,5 +1,5 @@
 {
-    "name": "dericofilho/csp",
+    "name": "ccirello/csp",
     "type": "library",
     "description": "Library to partially enable CSP-like concurrency model in PHP",
     "license": "MIT",
