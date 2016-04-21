@@ -145,7 +145,7 @@ class Message {
 		if (null === $key) {
 			$key = ftok(tempnam(sys_get_temp_dir(), 'csp.' . uniqid('shm', true)), 'C');
 		}
-		$this->shm = shm_attach($key);
+		$this->shm = shm_attach((int) $key);
 		if (false === $this->shm) {
 			trigger_error('Unable to attach shared memory segment for channel', E_ERROR);
 		}
