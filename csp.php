@@ -29,9 +29,9 @@ function cofunc(callable $fn) {
 		return;
 	}
 	if ($pid) {
-		pcntl_signal(SIGCHLD, SIG_IGN);
 		return;
 	}
+	pcntl_signal(SIGCHLD, SIG_IGN);
 	$params = [];
 	if (func_num_args() > 1) {
 		$params = array_slice(func_get_args(), 1);
