@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	CHUNK_SIZE = 4096
+	chunkSize = 4096
 )
 
 type message struct {
@@ -52,17 +52,13 @@ func New() *FireGo {
 }
 
 func (f *FireGo) Message(t MessageType, content interface{}) {
-	var msg message
+	msg := message{
+		t: t,
+	}
 	if t == GroupStart {
-		msg = message{
-			t:     t,
-			label: content.(string),
-		}
+		msg.label = content.(string)
 	} else {
-		msg = message{
-			t:       t,
-			content: content,
-		}
+		msg.content = content
 	}
 	f.mu.Lock()
 	f.messages = append(f.messages, msg)
@@ -118,24 +114,28 @@ func (f *FireGo) Flush(w http.ResponseWriter, r *http.Request) {
 		}
 		response := []interface{}{msgType, v.content}
 
-		responseBytes, _ := json.Marshal(response)
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			continue
+		}
+
 		lenResponse := len(responseBytes)
-		log.Println(string(responseBytes), lenResponse, CHUNK_SIZE)
-		if lenResponse < CHUNK_SIZE {
+		log.Printf("%s %v %v", responseBytes, lenResponse, chunkSize)
+		if lenResponse < chunkSize {
 			headers.Set(headerCount.generate(), strconv.Itoa(lenResponse)+`|`+string(responseBytes)+`|`)
 			continue
 		}
 
 		buf := bytes.NewBuffer(responseBytes)
-		chunk := buf.Next(CHUNK_SIZE)
+		chunk := buf.Next(chunkSize)
 		headers.Set(headerCount.generate(), strconv.Itoa(lenResponse)+`|`+string(chunk)+`|\`)
 		for {
-			chunk := buf.Next(CHUNK_SIZE)
+			chunk := buf.Next(chunkSize)
 			if len(chunk) == 0 {
 				break
 			}
 			body := `|` + string(chunk) + `|`
-			if len(chunk) == CHUNK_SIZE {
+			if len(chunk) == chunkSize {
 				body = body + `\`
 			}
 			headers.Set(headerCount.generate(), body)
