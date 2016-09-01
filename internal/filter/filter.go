@@ -10,46 +10,82 @@ type Bloomfilter struct {
 	size      uint32
 	hashCount int
 
-	mu       sync.Mutex
-	bitspace []int
+	mu             sync.Mutex   // mutex to coordinate the transition between bitspaces
+	btspSwitchMu   sync.RWMutex // mutext that allows bitspaces to be read while they are updated.
+	activeBitspace bool         // which one of the two bitspaces must be read for Has()
+	bitspaceF      []int
+	bitspaceT      []int
 }
 
 func New(size uint32, hashcount int) *Bloomfilter {
 	return &Bloomfilter{
 		size:      size,
 		hashCount: hashcount,
-		bitspace:  make([]int, size),
+		bitspaceF: make([]int, size),
+		bitspaceT: make([]int, size),
 	}
 }
 
 func (b *Bloomfilter) Add(str string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	b.btspSwitchMu.Lock()
+	defer b.btspSwitchMu.Unlock()
+
+	var bitspaceW []int
+	if b.activeBitspace {
+		bitspaceW = b.bitspaceF
+		copy(bitspaceW, b.bitspaceT)
+	} else {
+		bitspaceW = b.bitspaceT
+		copy(bitspaceW, b.bitspaceF)
+	}
+	b.activeBitspace = !b.activeBitspace
+
 	for i := 0; i < b.hashCount; i++ {
 		idx := b.bitspaceIdx(str, i)
-		b.bitspace[idx]++
+		bitspaceW[idx]++
 	}
 }
 
 func (b *Bloomfilter) Del(str string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	b.btspSwitchMu.Lock()
+	defer b.btspSwitchMu.Unlock()
+
+	var bitspaceW []int
+	if b.activeBitspace {
+		bitspaceW = b.bitspaceF
+		copy(bitspaceW, b.bitspaceT)
+	} else {
+		bitspaceW = b.bitspaceT
+		copy(bitspaceW, b.bitspaceF)
+	}
+	b.activeBitspace = !b.activeBitspace
+
 	for i := 0; i < b.hashCount; i++ {
 		idx := b.bitspaceIdx(str, i)
-		if b.bitspace[idx] > 0 {
-			b.bitspace[idx]--
+		if bitspaceW[idx] > 0 {
+			bitspaceW[idx]--
 		}
 	}
 }
 
 func (b *Bloomfilter) Has(str string) bool {
-	btsp := make([]int, b.size)
-	b.mu.Lock()
-	copy(btsp, b.bitspace)
-	b.mu.Unlock()
+	b.btspSwitchMu.RLock()
+	defer b.btspSwitchMu.RUnlock()
+
+	var bitspaceW []int
+	if b.activeBitspace {
+		bitspaceW = b.bitspaceT
+	} else {
+		bitspaceW = b.bitspaceF
+	}
+
 	for i := 0; i < b.hashCount; i++ {
 		idx := b.bitspaceIdx(str, i)
-		if btsp[idx] > 0 {
+		if bitspaceW[idx] > 0 {
 			return true
 		}
 	}

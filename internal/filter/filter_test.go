@@ -61,9 +61,14 @@ func TestBloomfilterDel(t *testing.T) {
 		t.Errorf("Word should have not been found after deletion")
 	}
 
-	for _, v := range b.bitspace {
+	for _, v := range b.bitspaceT {
 		if v < 0 {
-			t.Fatalf("bitspace corrupted")
+			t.Fatalf("bitspaceT corrupted")
+		}
+	}
+	for _, v := range b.bitspaceF {
+		if v < 0 {
+			t.Fatalf("bitspaceF corrupted")
 		}
 	}
 }
