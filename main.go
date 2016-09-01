@@ -1,15 +1,21 @@
 package main // import "cirello.io/bloomfilterd"
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 
 	"cirello.io/bloomfilterd/internal/filter"
 	"cirello.io/suture"
 )
 
 func main() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
 	var supervisor suture.Supervisor
 	dsvc := &daemonSvc{
 		d: &daemon{
@@ -17,7 +23,11 @@ func main() {
 		},
 	}
 	supervisor.Add(dsvc)
-	supervisor.Serve()
+	supervisor.ServeBackground()
+
+	<-c
+	fmt.Println("stopping...")
+	supervisor.Stop()
 }
 
 type daemonSvc struct {
