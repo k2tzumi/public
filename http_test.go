@@ -70,7 +70,7 @@ func TestHttp(t *testing.T) {
 	recList := httptest.NewRecorder()
 	d.ServeHTTP(recList, rList)
 	b, _ := ioutil.ReadAll(recList.Result().Body)
-	if fmt.Sprintf("%s", b) != `["default","default-2"]`+"\n" {
+	if fmt.Sprintf("%s", b) != `{"default":0,"default-2":0}`+"\n" {
 		t.Errorf("did not get valid filter list: %s %v", b, len(b))
 	}
 

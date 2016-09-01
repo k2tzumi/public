@@ -43,7 +43,12 @@ func (d *daemon) httpAdd(w http.ResponseWriter, r *http.Request) {
 
 func (d *daemon) httpList(w http.ResponseWriter, r *http.Request) {
 	filters := d.list()
-	if err := json.NewEncoder(w).Encode(filters); err != nil {
+	filtersSaturation := make(map[string]float64)
+	for _, name := range filters {
+		f := d.filter(name)
+		filtersSaturation[name] = f.Saturation()
+	}
+	if err := json.NewEncoder(w).Encode(filtersSaturation); err != nil {
 		http.Error(w, renderErr(err), http.StatusInternalServerError)
 		return
 	}

@@ -92,6 +92,26 @@ func (b *Bloomfilter) Has(str string) bool {
 	return false
 }
 
+func (b *Bloomfilter) Saturation() float64 {
+	b.btspSwitchMu.RLock()
+	defer b.btspSwitchMu.RUnlock()
+
+	var bitspaceW []int
+	if b.activeBitspace {
+		bitspaceW = b.bitspaceT
+	} else {
+		bitspaceW = b.bitspaceF
+	}
+
+	var i int
+	for _, v := range bitspaceW {
+		if v > 0 {
+			i++
+		}
+	}
+	return float64(i) / float64(len(bitspaceW))
+}
+
 func (b *Bloomfilter) bitspaceIdx(str string, i int) uint32 {
 	h := fnv.New32()
 	fmt.Fprintf(h, "%s%v", str, i)
