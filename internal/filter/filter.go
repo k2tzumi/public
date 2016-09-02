@@ -85,11 +85,11 @@ func (b *Bloomfilter) Has(str string) bool {
 
 	for i := 0; i < b.hashCount; i++ {
 		idx := b.bitspaceIdx(str, i)
-		if bitspaceW[idx] > 0 {
-			return true
+		if bitspaceW[idx] == 0 {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func (b *Bloomfilter) Saturation() float64 {
