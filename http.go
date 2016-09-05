@@ -71,6 +71,7 @@ func (d *daemon) httpFilter(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		f.Add(string(body))
+		w.WriteHeader(http.StatusNoContent)
 	case "GET":
 		resp := struct {
 			Name string
@@ -80,6 +81,7 @@ func (d *daemon) httpFilter(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, renderErr(http.StatusText(http.StatusInternalServerError)), http.StatusInternalServerError)
 			return
 		}
+
 	case "DELETE":
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -87,8 +89,13 @@ func (d *daemon) httpFilter(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		f.Del(string(body))
+		w.WriteHeader(http.StatusNoContent)
+
 	default:
-		http.Error(w, renderErr(http.StatusText(http.StatusNotImplemented)), http.StatusNotImplemented)
+		w.Header().Add("Allow", "GET")
+		w.Header().Add("Allow", "POST")
+		w.Header().Add("Allow", "DELETE")
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 }

@@ -97,13 +97,13 @@ func TestHttpFilter(t *testing.T) {
 		result     *string
 	}{
 		{"/filter/invalid", "POST", strings.NewReader("test"), http.StatusNotFound, nil},
-		{"/filter/default", "POST", strings.NewReader("test"), http.StatusOK, nil},
+		{"/filter/default", "POST", strings.NewReader("test"), http.StatusNoContent, nil},
 		{"/filter/default", "POST", new(errReader), http.StatusInternalServerError, nil},
 		{"/filter/default?body=test", "GET", nil, http.StatusOK, pstr(`{"Name":"default","OK":true}`)},
-		{"/filter/default", "DELETE", strings.NewReader("test"), http.StatusOK, nil},
+		{"/filter/default", "DELETE", strings.NewReader("test"), http.StatusNoContent, nil},
 		{"/filter/default", "DELETE", new(errReader), http.StatusInternalServerError, nil},
 		{"/filter/default?body=test", "GET", nil, http.StatusOK, pstr(`{"Name":"default","OK":false}`)},
-		{"/filter/default", "PATCH", nil, http.StatusNotImplemented, nil},
+		{"/filter/default", "PATCH", nil, http.StatusMethodNotAllowed, nil},
 	}
 
 	for _, call := range calls {
