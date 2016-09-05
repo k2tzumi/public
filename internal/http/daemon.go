@@ -1,4 +1,4 @@
-package main
+package http
 
 import (
 	"errors"
@@ -35,6 +35,7 @@ func (d *daemon) list() []string {
 	for name := range d.filters {
 		names = append(names, name)
 	}
+
 	return names
 }
 
@@ -44,5 +45,6 @@ func (d *daemon) filter(name string) *filter.Bloomfilter {
 	if f, ok := d.filters[name]; ok {
 		return f
 	}
+
 	return nil
 }
