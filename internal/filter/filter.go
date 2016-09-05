@@ -54,6 +54,10 @@ func (b *Bloomfilter) Del(str string) {
 	b.btspSwitchMu.Lock()
 	defer b.btspSwitchMu.Unlock()
 
+	if !b.has(str) {
+		return
+	}
+
 	var bitspaceW []int
 	if b.activeBitspace {
 		bitspaceW = b.bitspaceF
@@ -72,10 +76,7 @@ func (b *Bloomfilter) Del(str string) {
 	}
 }
 
-func (b *Bloomfilter) Has(str string) bool {
-	b.btspSwitchMu.RLock()
-	defer b.btspSwitchMu.RUnlock()
-
+func (b *Bloomfilter) has(str string) bool {
 	var bitspaceW []int
 	if b.activeBitspace {
 		bitspaceW = b.bitspaceT
@@ -89,7 +90,15 @@ func (b *Bloomfilter) Has(str string) bool {
 			return false
 		}
 	}
+
 	return true
+}
+
+func (b *Bloomfilter) Has(str string) bool {
+	b.btspSwitchMu.RLock()
+	defer b.btspSwitchMu.RUnlock()
+
+	return b.has(str)
 }
 
 func (b *Bloomfilter) Saturation() float64 {

@@ -29,6 +29,11 @@ func TestBloomfilter(t *testing.T) {
 	if b.Saturation() != 0.69140625 {
 		t.Errorf("change in algorithm made a change in saturation")
 	}
+
+	b.Add("another word")
+	if b.Saturation() != 0.6962890625 {
+		t.Errorf("change in algorithm made a change in saturation")
+	}
 }
 
 func readLines(path string) ([]string, error) {
@@ -50,11 +55,13 @@ func TestBloomfilterDel(t *testing.T) {
 	const word = "word"
 	b := New(10, 8)
 	b.Add(word)
+	b.Add(word)
 
 	if !b.Has("word") {
 		t.Errorf("Word should have been found")
 	}
 
+	b.Del(word)
 	b.Del(word)
 	if b.Has("word") {
 		t.Errorf("Word should have not been found after deletion")
