@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"cirello.io/bloomfilterd/internal/filter"
+	"cirello.io/bloomfilterd/internal/storage"
 )
 
 type errReader struct{}
@@ -34,15 +34,16 @@ func (errWriter) Write(p []byte) (int, error) {
 }
 
 func TestHttp(t *testing.T) {
-	d := &daemon{
-		filters: make(map[string]*filter.Bloomfilter),
-	}
+	d := &daemon{storage: storage.Must(storage.Memory)}
 
 	r, _ := http.NewRequest("POST", "/add", strings.NewReader(`{"name":"default", "size":4096, "hashcount":8}`))
 	rec := httptest.NewRecorder()
 	d.ServeHTTP(rec, r)
-	if _, ok := d.filters["default"]; !ok {
+	if d.filter("default") == nil {
 		t.Error("default filter not created")
+	}
+	if d.filter("non-existent") != nil {
+		t.Error("invalid filter found")
 	}
 
 	rErr, _ := http.NewRequest("POST", "/add", strings.NewReader(`{"name":"default", "size":4096, "hashcount":8`))
@@ -83,11 +84,8 @@ func TestHttp(t *testing.T) {
 }
 
 func TestHttpFilter(t *testing.T) {
-	d := &daemon{
-		filters: map[string]*filter.Bloomfilter{
-			"default": filter.New(4096, 8),
-		},
-	}
+	d := &daemon{storage: storage.Must(storage.Memory)}
+	d.add("default", 4096, 8)
 
 	calls := []struct {
 		url        string
