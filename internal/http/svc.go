@@ -6,35 +6,55 @@ import (
 	"net/http"
 
 	"cirello.io/bloomfilterd/internal/storage"
+
 	"github.com/coreos/etcd/raft/raftpb"
 )
 
 type Service struct {
+	listen string
+
 	d *daemon
 	l net.Listener
 }
 
-func (dsvc *Service) Serve() {
-	l, err := net.Listen("tcp", ":9091")
+func (s *Service) Serve() {
+	l, err := net.Listen("tcp", s.listen)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	dsvc.l = l
-	http.Handle("/", dsvc.d)
-	log.Println(http.Serve(dsvc.l, nil))
+	s.l = l
+	http.Handle("/", s.d)
+	log.Println(http.Serve(s.l, nil))
 }
 
-func (dsvc *Service) Stop() {
-	dsvc.l.Close()
+func (s *Service) Stop() {
+	s.l.Close()
 }
 
-func New(propose chan string, confChange chan raftpb.ConfChange, t storage.Type) *Service {
-	return &Service{
+func New(propose chan string, confChange chan raftpb.ConfChange, opts ...Option) *Service {
+	svc := &Service{
 		d: &daemon{
 			propose:    propose,
 			confChange: confChange,
-			storage:    storage.Must(t),
 		},
+	}
+	for _, opt := range opts {
+		opt(svc)
+	}
+	return svc
+}
+
+type Option func(*Service)
+
+func Storage(t storage.Type) Option {
+	return func(s *Service) {
+		s.d.storage = storage.Must(t)
+	}
+}
+
+func Listen(listen string) Option {
+	return func(s *Service) {
+		s.listen = listen
 	}
 }

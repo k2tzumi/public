@@ -15,11 +15,11 @@ import (
 func main() {
 	cluster := flag.String("cluster", "http://127.0.0.1:9021", "comma separated cluster peers")
 	id := flag.Int("id", 1, "node ID")
-	kvport := flag.Int("port", 9121, "key-value server port")
+	listen := flag.String("listen", ":9121", "listen")
 	join := flag.Bool("join", false, "join an existing cluster")
 	flag.Parse()
 
-	fmt.Println(*cluster, *id, *kvport, *join)
+	fmt.Println(*cluster, *id, *listen, *join)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -30,7 +30,12 @@ func main() {
 	defer close(confChange)
 
 	var supervisor suture.Supervisor
-	http := http.New(propose, confChange, storage.Memory)
+	http := http.New(
+		propose,
+		confChange,
+		http.Storage(storage.Memory),
+		http.Listen(*listen),
+	)
 
 	supervisor.Add(http)
 	supervisor.ServeBackground()
