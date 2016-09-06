@@ -19,7 +19,7 @@ const (
 )
 
 type Engine interface {
-	Add(name string, size uint32, hashcount int) error
+	Add(name string, size uint64, hashcount int) error
 	List() []string
 	Filter(name string) *filter.Bloomfilter
 }

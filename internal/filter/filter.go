@@ -7,7 +7,7 @@ import (
 )
 
 type Bloomfilter struct {
-	size      uint32
+	size      uint64
 	hashCount int
 
 	mu             sync.Mutex   // mutex to coordinate the transition between bitspaces
@@ -17,7 +17,7 @@ type Bloomfilter struct {
 	bitspaceT      []int
 }
 
-func New(size uint32, hashcount int) *Bloomfilter {
+func New(size uint64, hashcount int) *Bloomfilter {
 	return &Bloomfilter{
 		size:      size,
 		hashCount: hashcount,
@@ -121,9 +121,9 @@ func (b *Bloomfilter) Saturation() float64 {
 	return float64(i) / float64(len(bitspaceW))
 }
 
-func (b *Bloomfilter) bitspaceIdx(str string, i int) uint32 {
-	h := fnv.New32()
+func (b *Bloomfilter) bitspaceIdx(str string, i int) uint64 {
+	h := fnv.New64()
 	fmt.Fprintf(h, "%s%v", str, i)
-	sum := h.Sum32()
+	sum := h.Sum64()
 	return sum % b.size
 }

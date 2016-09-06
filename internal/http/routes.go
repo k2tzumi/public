@@ -24,7 +24,7 @@ func (d *daemon) httpAdd(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var f struct {
 		Name      string
-		Size      uint32
+		Size      uint64
 		Hashcount int
 	}
 	if err := json.NewDecoder(r.Body).Decode(&f); err != nil {

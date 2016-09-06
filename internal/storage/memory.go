@@ -11,7 +11,7 @@ type Mem struct {
 	filters map[string]*filter.Bloomfilter
 }
 
-func (m *Mem) Add(name string, size uint32, hashcount int) error {
+func (m *Mem) Add(name string, size uint64, hashcount int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if _, ok := m.filters[name]; ok {

@@ -13,7 +13,7 @@ type daemon struct {
 	storage storage.Engine
 }
 
-func (d *daemon) add(name string, size uint32, hashcount int) error {
+func (d *daemon) add(name string, size uint64, hashcount int) error {
 	return d.storage.Add(name, size, hashcount)
 }
 

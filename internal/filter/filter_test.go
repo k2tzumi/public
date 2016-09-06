@@ -7,7 +7,7 @@ import (
 )
 
 func TestBloomfilter(t *testing.T) {
-	b := New(2048, 16)
+	b := New(3072, 16)
 	lines, err := readLines("wordlist")
 	if err != nil {
 		t.Fatal("Dictionary could not be loaded")
@@ -26,13 +26,13 @@ func TestBloomfilter(t *testing.T) {
 		t.Errorf("Should find this word: used")
 	}
 
-	if b.Saturation() != 0.69140625 {
-		t.Errorf("change in algorithm made a change in saturation")
+	if sat := b.Saturation(); sat != 0.5345052083333334 {
+		t.Errorf("change in algorithm made a change in saturation: %v", sat)
 	}
 
 	b.Add("another word")
-	if b.Saturation() != 0.6962890625 {
-		t.Errorf("change in algorithm made a change in saturation")
+	if sat := b.Saturation(); sat != 0.5390625 {
+		t.Errorf("change in algorithm made a change in saturation: %v", sat)
 	}
 }
 
