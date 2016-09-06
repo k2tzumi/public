@@ -47,10 +47,8 @@ func New(propose chan string, confChange chan raftpb.ConfChange, opts ...Option)
 
 type Option func(*Service)
 
-func Storage(t storage.Type) Option {
-	return func(s *Service) {
-		s.d.storage = storage.Must(t)
-	}
+func MemoryStorage(s *Service) {
+	s.d.storage = storage.Must(storage.Memory)
 }
 
 func Listen(listen string) Option {

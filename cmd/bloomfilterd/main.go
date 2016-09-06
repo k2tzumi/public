@@ -7,7 +7,6 @@ import (
 	"os/signal"
 
 	"cirello.io/bloomfilterd/internal/http"
-	"cirello.io/bloomfilterd/internal/storage"
 	"cirello.io/suture"
 	"github.com/coreos/etcd/raft/raftpb"
 )
@@ -33,7 +32,7 @@ func main() {
 	http := http.New(
 		propose,
 		confChange,
-		http.Storage(storage.Memory),
+		http.MemoryStorage,
 		http.Listen(*listen),
 	)
 
