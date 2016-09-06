@@ -5,7 +5,8 @@ import (
 	"net"
 	"net/http"
 
-	"cirello.io/bloomfilterd/internal/filter"
+	"cirello.io/bloomfilterd/internal/storage"
+	"github.com/coreos/etcd/raft/raftpb"
 )
 
 type Service struct {
@@ -28,10 +29,12 @@ func (dsvc *Service) Stop() {
 	dsvc.l.Close()
 }
 
-func New() *Service {
+func New(propose chan string, confChange chan raftpb.ConfChange, t storage.Type) *Service {
 	return &Service{
 		d: &daemon{
-			filters: make(map[string]*filter.Bloomfilter),
+			propose:    propose,
+			confChange: confChange,
+			storage:    storage.Must(t),
 		},
 	}
 }

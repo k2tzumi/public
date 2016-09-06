@@ -1,50 +1,26 @@
 package http
 
 import (
-	"errors"
-	"sync"
-
 	"cirello.io/bloomfilterd/internal/filter"
-)
-
-var (
-	errFilterAlreadyExists = errors.New("filter already exists")
+	"cirello.io/bloomfilterd/internal/storage"
+	"github.com/coreos/etcd/raft/raftpb"
 )
 
 type daemon struct {
-	mu      sync.Mutex
-	filters map[string]*filter.Bloomfilter
+	propose    chan string
+	confChange chan raftpb.ConfChange
+
+	storage storage.Engine
 }
 
 func (d *daemon) add(name string, size uint32, hashcount int) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	if _, ok := d.filters[name]; ok {
-		return errFilterAlreadyExists
-	}
-
-	d.filters[name] = filter.New(size, hashcount)
-	return nil
+	return d.storage.Add(name, size, hashcount)
 }
 
 func (d *daemon) list() []string {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	names := make([]string, 0, len(d.filters))
-	for name := range d.filters {
-		names = append(names, name)
-	}
-
-	return names
+	return d.storage.List()
 }
 
 func (d *daemon) filter(name string) *filter.Bloomfilter {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	if f, ok := d.filters[name]; ok {
-		return f
-	}
-
-	return nil
+	return d.storage.Filter(name)
 }
