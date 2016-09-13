@@ -4,17 +4,11 @@ The intuitive flow for a regular application: a simple cycle between data struct
 <pre><code>
                     Write
         ┌─────────────────────────────┐
-        │                             │
         │                             ▼
  ┌─────────────┐               ┌─────────────┐
- │             │               │             │
- │             │               │             │
  │ Application │               │   Storage   │
- │             │               │             │
- │             │               │             │
  └─────────────┘               └─────────────┘
         ▲                             │
-        │                             │
         └─────────────────────────────┘
                      Read
 </code></pre>
@@ -25,17 +19,11 @@ Raft is takes control of the writing steps of the storage, the application still
 <pre><code>
                               Propose
        ┌───────────────────────────────────────────────────────┐
-       │                                                       │
        │                                                       ▼
-┌─────────────┐           ┌─────────────┐               ┌─────────────┐
-│             │           │             │               │             │
-│             │           │             │     Commit    │             │
+┌─────────────┐           ┌─────────────┐     Commit    ┌─────────────┐
 │ Application │           │   Storage   │◀──────────────│    Raft     │───────▶ Raft Cluster
-│             │           │             │               │             │
-│             │           │             │               │             │
 └─────────────┘           └─────────────┘               └─────────────┘
        ▲                         │
-       │                         │
        └─────────────────────────┘
                    Read
 </code></pre>
