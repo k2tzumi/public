@@ -24,30 +24,6 @@ func TestDebug(t *testing.T) {
 	}
 }
 
-func TestMarshal(t *testing.T) {
-	err := Str("network unreachable")
-
-	// Single error. No user is set, so we will have a zero-length field inside.
-	e1 := E("Get", err)
-
-	// Nested error.
-	e2 := E("Read", e1)
-
-	b := MarshalError(e2)
-	e3 := UnmarshalError(b)
-
-	in := e2.(*Error)
-	out := e3.(*Error)
-	// Compare elementwise.
-	if in.Op != out.Op {
-		t.Errorf("expected Op %q; got %q", in.Op, out.Op)
-	}
-	// Note that error will have lost type information, so just check its Error string.
-	if in.Err.Error() != out.Err.Error() {
-		t.Errorf("expected Err %q; got %q", in.Err, out.Err)
-	}
-}
-
 func TestSeparator(t *testing.T) {
 	defer func(prev string) {
 		Separator = prev
