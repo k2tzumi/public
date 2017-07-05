@@ -14,6 +14,13 @@ import (
 	"testing"
 )
 
+// Upspin derived error.Kind
+const (
+	IO         Kind = "I/O error"
+	Invalid    Kind = "Invalid"
+	Permission Kind = "permission denied"
+)
+
 func TestDebug(t *testing.T) {
 	// Test with -tags debug to run the tests in debug_test.go
 	cmd := exec.Command("go", "test", "-tags", "debug")
@@ -34,24 +41,28 @@ func TestSeparator(t *testing.T) {
 	err := Str("network unreachable")
 
 	// Single error. No user is set, so we will have a zero-length field inside.
-	e1 := E("Get", err)
+	e1 := E("Get", IO, err)
 
 	// Nested error.
-	e2 := E("Read", e1)
+	e2 := E("Read", Other, e1)
 
-	want := "Read:: Get: network unreachable"
+	want := "Read: I/O error:: Get: network unreachable"
 	if errorAsString(e2) != want {
 		t.Errorf("expected %q; got %q", want, e2)
 	}
 }
 
 func TestDoesNotChangePreviousError(t *testing.T) {
-	err := E("permission denied")
+	err := E(Permission)
 	err2 := E("I will NOT modify err", err)
 
-	expected := "I will NOT modify err:\n\tpermission denied"
+	expected := "I will NOT modify err: permission denied"
 	if errorAsString(err2) != expected {
 		t.Fatalf("Expected %q, got %q", expected, err2)
+	}
+	kind := err.(*Error).Kind
+	if kind != Permission {
+		t.Fatalf("Expected kind %v, got %v", Permission, kind)
 	}
 }
 
@@ -78,24 +89,26 @@ var matchTests = []matchTest{
 	{io.EOF, E(io.EOF), false},
 	// Success. We can drop fields from the first argument and still match.
 	{E(io.EOF), E(io.EOF), true},
-	{E("Op", io.EOF), E("Op", io.EOF), true},
-	{E("Op"), E("Op", io.EOF), true},
+	{E("Op", Invalid, io.EOF), E("Op", Invalid, io.EOF), true},
+	{E("Op", Invalid), E("Op", Invalid, io.EOF), true},
+	{E("Op"), E("Op", Invalid, io.EOF), true},
 	// Failure.
 	{E(io.EOF), E(io.ErrClosedPipe), false},
 	{E("Op1"), E("Op2"), false},
-	{E("Op", io.EOF, "jane"), E("Op", io.EOF, "john"), false},
+	{E(Invalid), E(Permission), false},
+	{E("jane"), E("john"), false},
+	{E("Op", Invalid, io.EOF, "jane"), E("Op", Invalid, io.EOF, "john"), false},
 	{E("path1", Str("something")), E("path1"), false}, // Test nil error on rhs.
 	// Nested *Errors.
-	{E("Op1", E("path1")), E("Op1", E("Op2", "path1")), true},
-	{E("Op1", "path1"), E("Op1", E("Op2", "path1")), false},
-	{E("Op1", E("path1")), E("Op1", Str(E("Op2", "path1").Error())), false},
+	{E("Op1", "path1"), E("Op1", "john", E("Op2", "jane", "path1")), false},
+	{E("Op1", E("path1")), E("Op1", "john", Str(E("Op2", "jane", "path1").Error())), false},
 }
 
 func TestMatch(t *testing.T) {
-	for _, test := range matchTests {
+	for i, test := range matchTests {
 		matched := Match(test.err1, test.err2)
 		if matched != test.matched {
-			t.Errorf("Match(%q, %q)=%t; want %t", test.err1, test.err2, matched, test.matched)
+			t.Errorf("%d: Match(%q, %q)=%t; want %t", i, test.err1, test.err2, matched, test.matched)
 		}
 	}
 }

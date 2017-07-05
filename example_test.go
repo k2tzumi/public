@@ -14,6 +14,7 @@ import (
 )
 
 func ExampleError() {
+	const Network errors.Kind = "Network"
 	err := errors.Str("network unreachable")
 
 	// Single error.
@@ -23,7 +24,7 @@ func ExampleError() {
 
 	// Nested error.
 	fmt.Println("\nNested error:")
-	e2 := errors.E("Read", e1)
+	e2 := errors.E(Network, "Read", e1)
 	fmt.Println(e2)
 
 	// Output:
@@ -32,7 +33,7 @@ func ExampleError() {
 	// Get: network unreachable
 	//
 	// Nested error:
-	// Read:
+	// Read: Network:
 	//	Get: network unreachable
 }
 

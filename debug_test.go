@@ -76,5 +76,5 @@ func func3() error {
 }
 
 func func4() error {
-	return errors.E("valid.UserName", fmt.Errorf("bad-username"))
+	return errors.E("valid.UserName", errors.Str("bad-username"))
 }

@@ -13,6 +13,18 @@ import (
 	"runtime"
 )
 
+// Kind defines the kind of error this is.
+type Kind string
+
+// Kinds of errors. You can extend these with your own.
+const (
+	Other Kind = "" // Unclassified error. This value is not printed in the error message.
+)
+
+func (k Kind) String() string {
+	return string(k)
+}
+
 // Error is the type that implements the error interface.
 // It contains a number of fields, each of different type.
 // An Error value may leave some values unset.
@@ -20,16 +32,18 @@ type Error struct {
 	// Op is the operation being performed, usually the name of the method
 	// being invoked (Get, Put, etc.).
 	Op string
-
 	// The underlying error that triggered this one, if any.
 	Err error
+	// Kind is the class of error, such as permission failure,
+	// or "Other" if its class is unknown or irrelevant.
+	Kind Kind
 
 	// Stack information; used only when the 'debug' build tag is set.
 	stack
 }
 
 func (e *Error) isZero() bool {
-	return e.Op == "" && e.Err == nil
+	return e.Op == "" && e.Err == nil && e.Kind == Other
 }
 
 var (
@@ -53,6 +67,8 @@ var Separator = ":\n\t"
 //	string
 //		The operation being performed, usually the method
 //		being invoked (Get, Put, etc.)
+//	errors.Kind
+//		The class of error, such as permission failure.
 //	error
 //		The underlying error that triggered this one.
 //
@@ -67,6 +83,8 @@ func E(args ...interface{}) error {
 		switch arg := arg.(type) {
 		case string:
 			e.Op = arg
+		case Kind:
+			e.Kind = arg
 		case *Error:
 			// Make a copy
 			copy := *arg
@@ -82,6 +100,20 @@ func E(args ...interface{}) error {
 
 	// Populate stack information (only in debug mode).
 	e.populateStack()
+
+	prev, ok := e.Err.(*Error)
+	if !ok {
+		return e
+	}
+
+	if prev.Kind == e.Kind {
+		prev.Kind = Other
+	}
+	// If this error has Kind unset or Other, pull up the inner one.
+	if e.Kind == Other {
+		e.Kind = prev.Kind
+		prev.Kind = Other
+	}
 
 	return e
 }
@@ -100,6 +132,10 @@ func (e *Error) Error() string {
 	if e.Op != "" {
 		pad(b, ": ")
 		b.WriteString(e.Op)
+	}
+	if e.Kind != Other {
+		pad(b, ": ")
+		b.WriteString(e.Kind.String())
 	}
 	if e.Err != nil {
 		// Indent on new line if we are cascading non-empty Upspin errors.
@@ -162,6 +198,9 @@ func Match(err1, err2 error) bool {
 		return false
 	}
 	if e1.Op != "" && e2.Op != e1.Op {
+		return false
+	}
+	if e1.Kind != Other && e2.Kind != e1.Kind {
 		return false
 	}
 	if e1.Err != nil {
