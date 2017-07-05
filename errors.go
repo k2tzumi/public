@@ -1,8 +1,9 @@
+// Copyright 2017 Ulderico Cirello. All rights reserved.
 // Copyright 2016 The Upspin Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package errors defines the error handling used by all Upspin software.
+// Package errors defines a generalized error handling based on Upspin software.
 package errors
 
 import (
@@ -10,27 +11,18 @@ import (
 	"encoding"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"runtime"
-	"strings"
-
-	"upspin.io/log"
-	"upspin.io/upspin"
 )
 
 // Error is the type that implements the error interface.
 // It contains a number of fields, each of different type.
 // An Error value may leave some values unset.
 type Error struct {
-	// Path is the Upspin path name of the item being accessed.
-	Path upspin.PathName
-	// User is the Upspin name of the user attempting the operation.
-	User upspin.UserName
 	// Op is the operation being performed, usually the name of the method
-	// being invoked (Get, Put, etc.). It should not contain an at sign @.
+	// being invoked (Get, Put, etc.).
 	Op string
-	// Kind is the class of error, such as permission failure,
-	// or "Other" if its class is unknown or irrelevant.
-	Kind Kind
+
 	// The underlying error that triggered this one, if any.
 	Err error
 
@@ -39,7 +31,7 @@ type Error struct {
 }
 
 func (e *Error) isZero() bool {
-	return e.Path == "" && e.User == "" && e.Op == "" && e.Kind == 0 && e.Err == nil
+	return e.Op == "" && e.Err == nil
 }
 
 var (
@@ -55,67 +47,6 @@ var (
 // to ":: ".
 var Separator = ":\n\t"
 
-// Kind defines the kind of error this is, mostly for use by systems
-// such as FUSE that must act differently depending on the error.
-type Kind uint8
-
-// Kinds of errors.
-//
-// The values of the error kinds are common between both
-// clients and servers. Do not reorder this list or remove
-// any items since that will change their values.
-// New items must be added only to the end.
-const (
-	Other         Kind = iota // Unclassified error. This value is not printed in the error message.
-	Invalid                   // Invalid operation for this type of item.
-	Permission                // Permission denied.
-	IO                        // External I/O error such as network failure.
-	Exist                     // Item already exists.
-	NotExist                  // Item does not exist.
-	IsDir                     // Item is a directory.
-	NotDir                    // Item is not a directory..
-	NotEmpty                  // Directory not empty.
-	Private                   // Information withheld.
-	Internal                  // Internal error or inconsistency.
-	CannotDecrypt             // No wrapped key for user with read access.
-	Transient                 // A transient error.
-	BrokenLink                // Link target does not exist.
-)
-
-func (k Kind) String() string {
-	switch k {
-	case Other:
-		return "other error"
-	case Invalid:
-		return "invalid operation"
-	case Permission:
-		return "permission denied"
-	case IO:
-		return "I/O error"
-	case Exist:
-		return "item already exists"
-	case NotExist:
-		return "item does not exist"
-	case BrokenLink:
-		return "link target does not exist"
-	case IsDir:
-		return "item is a directory"
-	case NotDir:
-		return "item is not a directory"
-	case NotEmpty:
-		return "directory not empty"
-	case Private:
-		return "information withheld"
-	case Internal:
-		return "internal error"
-	case CannotDecrypt:
-		return `no wrapped key for user; owner must "upspin share -fix"`
-	case Transient:
-		return "transient error"
-	}
-	return "unknown error kind"
-}
-
 // E builds an error value from its arguments.
 // There must be at least one argument or E panics.
 // The type of each argument determines its meaning.
@@ -123,24 +54,14 @@ func (k Kind) String() string {
 // only the last one is recorded.
 //
 // The types are:
-//	upspin.PathName
-//		The Upspin path name of the item being accessed.
-//	upspin.UserName
-//		The Upspin name of the user attempting the operation.
 //	string
 //		The operation being performed, usually the method
 //		being invoked (Get, Put, etc.)
-//	errors.Kind
-//		The class of error, such as permission failure.
 //	error
 //		The underlying error that triggered this one.
 //
 // If the error is printed, only those items that have been
 // set to non-zero values will appear in the result.
-//
-// If Kind is not specified or Other, we set it to the Kind of
-// the underlying error.
-//
 func E(args ...interface{}) error {
 	if len(args) == 0 {
 		panic("call to errors.E with no arguments")
@@ -148,30 +69,8 @@ func E(args ...interface{}) error {
 	e := &Error{}
 	for _, arg := range args {
 		switch arg := arg.(type) {
-		case upspin.PathName:
-			e.Path = arg
-		case upspin.UserName:
-			e.User = arg
 		case string:
-			// Someone might accidentally call us with a user or path name
-			// that is not of the right type. Take care of that and log it.
-			if strings.Contains(arg, "@") {
-				_, file, line, _ := runtime.Caller(1)
-				log.Printf("errors.E: unqualified type for %q from %s:%d", arg, file, line)
-				if strings.Contains(arg, "/") {
-					if e.Path != "" { // Don't overwrite a valid path.
-						e.Path = upspin.PathName(arg)
-					}
-				} else {
-					if e.User != "" { // Don't overwrite a valid user.
-						e.User = upspin.UserName(arg)
-					}
-				}
-				continue
-			}
 			e.Op = arg
-		case Kind:
-			e.Kind = arg
 		case *Error:
 			// Make a copy
 			copy := *arg
@@ -188,28 +87,6 @@ func E(args ...interface{}) error {
 	// Populate stack information (only in debug mode).
 	e.populateStack()
 
-	prev, ok := e.Err.(*Error)
-	if !ok {
-		return e
-	}
-
-	// The previous error was also one of ours. Suppress duplications
-	// so the message won't contain the same kind, file name or user name
-	// twice.
-	if prev.Path == e.Path {
-		prev.Path = ""
-	}
-	if prev.User == e.User {
-		prev.User = ""
-	}
-	if prev.Kind == e.Kind {
-		prev.Kind = Other
-	}
-	// If this error has Kind unset or Other, pull up the inner one.
-	if e.Kind == Other {
-		e.Kind = prev.Kind
-		prev.Kind = Other
-	}
 	return e
 }
 
@@ -224,26 +101,9 @@ func pad(b *bytes.Buffer, str string) {
 func (e *Error) Error() string {
 	b := new(bytes.Buffer)
 	e.printStack(b)
-	if e.Path != "" {
-		pad(b, ": ")
-		b.WriteString(string(e.Path))
-	}
-	if e.User != "" {
-		if e.Path == "" {
-			pad(b, ": ")
-		} else {
-			pad(b, ", ")
-		}
-		b.WriteString("user ")
-		b.WriteString(string(e.User))
-	}
 	if e.Op != "" {
 		pad(b, ": ")
 		b.WriteString(e.Op)
-	}
-	if e.Kind != 0 {
-		pad(b, ": ")
-		b.WriteString(e.Kind.String())
 	}
 	if e.Err != nil {
 		// Indent on new line if we are cascading non-empty Upspin errors.
@@ -294,12 +154,7 @@ func (e *Error) MarshalAppend(b []byte) []byte {
 	if e == nil {
 		return b
 	}
-	b = appendString(b, string(e.Path))
-	b = appendString(b, string(e.User))
 	b = appendString(b, e.Op)
-	var tmp [16]byte // For use by PutVarint.
-	N := binary.PutVarint(tmp[:], int64(e.Kind))
-	b = append(b, tmp[:N]...)
 	b = MarshalErrorAppend(e.Err, b)
 	return b
 }
@@ -348,19 +203,8 @@ func (e *Error) UnmarshalBinary(b []byte) error {
 	}
 	data, b := getBytes(b)
 	if data != nil {
-		e.Path = upspin.PathName(data)
-	}
-	data, b = getBytes(b)
-	if data != nil {
-		e.User = upspin.UserName(data)
-	}
-	data, b = getBytes(b)
-	if data != nil {
 		e.Op = string(data)
 	}
-	k, N := binary.Varint(b)
-	e.Kind = Kind(k)
-	b = b[N:]
 	e.Err = UnmarshalError(b)
 	return nil
 }
@@ -431,10 +275,6 @@ func getBytes(b []byte) (data, remaining []byte) {
 // otherwise it compares the strings returned by the Error methods.
 // Elements that are in the second argument but not present in
 // the first are ignored.
-//
-// For example,
-//	Match(errors.E(upspin.UserName("joe@schmoe.com"), errors.Permission), err)
-// tests whether err is an Error with Kind=Permission and User=joe@schmoe.com.
 func Match(err1, err2 error) bool {
 	e1, ok := err1.(*Error)
 	if !ok {
@@ -444,16 +284,7 @@ func Match(err1, err2 error) bool {
 	if !ok {
 		return false
 	}
-	if e1.Path != "" && e2.Path != e1.Path {
-		return false
-	}
-	if e1.User != "" && e2.User != e1.User {
-		return false
-	}
 	if e1.Op != "" && e2.Op != e1.Op {
-		return false
-	}
-	if e1.Kind != Other && e2.Kind != e1.Kind {
 		return false
 	}
 	if e1.Err != nil {

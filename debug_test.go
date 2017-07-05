@@ -1,3 +1,4 @@
+// Copyright 2017 Ulderico Cirello. All rights reserved.
 // Copyright 2016 The Upspin Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -12,20 +13,15 @@ import (
 	"strings"
 	"testing"
 
-	"upspin.io/errors"
-	"upspin.io/upspin"
-	"upspin.io/valid"
+	"cirello.io/errors"
 )
 
 var errorLines = strings.Split(strings.TrimSpace(`
-	.*/upspin.io/errors/debug_test.go:\d+: upspin.io/errors_test.func1:
-	.*/upspin.io/errors/debug_test.go:\d+: ...T.func2:
-	.*/upspin.io/errors/debug_test.go:\d+: ...func3:
-	.*/upspin.io/errors/debug_test.go:\d+: ...func4:
-	.*/upspin.io/valid/valid.go:\d+: ...valid.UserName:
-	.*/upspin.io/user/user.go:\d+: ...user.Parse: user@home/path: op: invalid operation:
-	valid.UserName:
-	user bad-username: user.Parse: user name must contain one @ symbol
+	.*/cirello.io/errors/debug_test.go:\d+: cirello.io/errors_test.func1:
+	.*/cirello.io/errors/debug_test.go:\d+: ...T.func2:
+	.*/cirello.io/errors/debug_test.go:\d+: ...func3:
+	.*/cirello.io/errors/debug_test.go:\d+: ...func4: op:
+	valid.UserName: bad-username
 `), "\n")
 
 var errorLineREs = make([]*regexp.Regexp, len(errorLines))
@@ -72,7 +68,7 @@ func func1() error {
 type T struct{}
 
 func (T) func2() error {
-	return errors.E("op", upspin.PathName("user@home/path"), func3())
+	return errors.E("op", func3())
 }
 
 func func3() error {
@@ -80,5 +76,5 @@ func func3() error {
 }
 
 func func4() error {
-	return valid.UserName("bad-username")
+	return errors.E("valid.UserName", fmt.Errorf("bad-username"))
 }
