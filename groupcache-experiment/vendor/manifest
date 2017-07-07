@@ -1,0 +1,18 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/golang/groupcache",
+			"repository": "https://github.com/golang/groupcache",
+			"revision": "604ed5785183e59ae2789449d89e73f3a2a77987",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/golang/protobuf/proto",
+			"repository": "https://github.com/golang/protobuf",
+			"revision": "34a5f244f1c01cdfee8e60324258cfbb97a42aec",
+			"branch": "master",
+			"path": "/proto"
+		}
+	]
+}
