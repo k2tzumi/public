@@ -202,6 +202,8 @@ echo "Default";
  */
 function select_channel(array $actions) {
 	while (true) {
+		// TODO: shuffle actions
+		// TODO: only invoke default if no other blocking call was completed.
 		foreach ($actions as $action) {
 			if ('default' == $action[0]) {
 				call_user_func_array($action[1]);
