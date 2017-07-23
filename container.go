@@ -5,22 +5,18 @@ import (
 	"fmt"
 )
 
-func Container(bodies ...Renderer) Renderer {
+func Container(body Renderer) Renderer {
 	return func(c context.Context) {
 		fmt.Print(`<div class="container">`)
-		for _, body := range bodies {
-			body(c)
-		}
+		body(c)
 		fmt.Println(`</div>`)
 	}
 }
 
-func FluidContainer(bodies ...Renderer) Renderer {
+func FluidContainer(body Renderer) Renderer {
 	return func(c context.Context) {
 		fmt.Print(`<div class="container-fluid">`)
-		for _, body := range bodies {
-			body(c)
-		}
+		body(c)
 		fmt.Println(`</div>`)
 	}
 }
