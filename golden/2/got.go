@@ -21,5 +21,5 @@ func main() {
 		),
 	)
 
-	b.Render(os.Stdout, context.Background())
+	b.Render(context.Background(), os.Stdout)
 }

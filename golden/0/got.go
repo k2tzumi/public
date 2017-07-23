@@ -15,5 +15,5 @@ func main() {
 		btstrpr.BaseJS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
 	)
 
-	b.Render(os.Stdout, context.Background())
+	b.Render(context.Background(), os.Stdout)
 }

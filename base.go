@@ -33,7 +33,7 @@ type Bootstrap struct {
 }
 
 // Render sends context down for rendering and writes the result to out.
-func (b *Bootstrap) Render(out io.Writer, c context.Context) {
+func (b *Bootstrap) Render(c context.Context, out io.Writer) {
 	t := template.Must(template.New("rootTop").Parse(rootTopTpl))
 	var bufTop bytes.Buffer
 	err := t.Execute(&bufTop, struct{ BaseCSS string }{b.baseCSS})
@@ -43,7 +43,7 @@ func (b *Bootstrap) Render(out io.Writer, c context.Context) {
 	fmt.Fprintln(out, bufTop.String())
 
 	if b.body != nil {
-		b.body(out, c)
+		b.body(c, out)
 	}
 
 	t = template.Must(template.New("rootBottom").Parse(rootBottomTpl))
