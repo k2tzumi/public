@@ -18,8 +18,10 @@ func TestRender(t *testing.T) {
 
 	for _, file := range files {
 		var got bytes.Buffer
+		var errbuf bytes.Buffer
 		cmd := exec.Command("go", "run", filepath.Join(file.Name(), "got.go"))
 		cmd.Stdout = &got
+		cmd.Stderr = &errbuf
 		cmd.Run()
 
 		expected, err := ioutil.ReadFile(filepath.Join(file.Name(), "expect.html"))
@@ -29,6 +31,7 @@ func TestRender(t *testing.T) {
 
 		if result := bytes.Compare(got.Bytes(), expected); result != 0 {
 			t.Error(file.Name(), "error")
+			t.Log("stderr:", errbuf.String())
 			t.Log("got:", got.String())
 			t.Log("len:", len(got.String()))
 			t.Log("expected:", string(expected))
