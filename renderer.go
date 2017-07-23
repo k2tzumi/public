@@ -1,8 +1,8 @@
 package btstrpr
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
-type Renderer func(context.Context)
-
-
-
+type Renderer func(io.Writer, context.Context)

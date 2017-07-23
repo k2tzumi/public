@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"cirello.io/btstrpr"
 )
@@ -20,5 +21,5 @@ func main() {
 		),
 	)
 
-	b.Render(context.Background())
+	b.Render(os.Stdout, context.Background())
 }

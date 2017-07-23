@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"cirello.io/btstrpr"
 )
@@ -14,5 +15,5 @@ func main() {
 		btstrpr.BaseJS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
 	)
 
-	b.Render(context.Background())
+	b.Render(os.Stdout, context.Background())
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io"
 )
 
 const rootTopTpl = `<!DOCTYPE html>
@@ -31,18 +32,18 @@ type Bootstrap struct {
 	body    Renderer
 }
 
-// Render prints to standard output the rendered content.
-func (b *Bootstrap) Render(c context.Context) {
+// Render sends context down for rendering and writes the result to out.
+func (b *Bootstrap) Render(out io.Writer, c context.Context) {
 	t := template.Must(template.New("rootTop").Parse(rootTopTpl))
 	var bufTop bytes.Buffer
 	err := t.Execute(&bufTop, struct{ BaseCSS string }{b.baseCSS})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(bufTop.String())
+	fmt.Fprintln(out, bufTop.String())
 
 	if b.body != nil {
-		b.body(c)
+		b.body(out, c)
 	}
 
 	t = template.Must(template.New("rootBottom").Parse(rootBottomTpl))
@@ -51,8 +52,7 @@ func (b *Bootstrap) Render(c context.Context) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(bufBottom.String())
-
+	fmt.Fprintln(out, bufBottom.String())
 }
 
 // Option configures Bootstrap

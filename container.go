@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -24,20 +25,21 @@ func Container(body Renderer, attributes ...interface{}) Renderer {
 			fmt.Sprint(attributes[i+1]),
 		})
 	}
-	return func(c context.Context) {
-		fmt.Print(`<div `, renderAttrs(attrs), `>`)
-		body(c)
-		fmt.Println(`</div>`)
+	return func(out io.Writer, c context.Context) {
+		fmt.Fprint(out, `<div `, renderAttrs(attrs), `>`)
+		body(out, c)
+		fmt.Fprintln(out, `</div>`)
 	}
 }
 
-// FluidContainer renders a div with container-fluid class
+// FluidContainer renders a div with container-fluid class. Panics if attributes
+// are not pairs.
 func FluidContainer(body Renderer, attributes ...interface{}) Renderer {
 	if len(attributes)%2 != 0 {
 		panic("attributes must always be pairs.")
 	}
 	attrs := Attributes{
-		[2]string{"class", "container"},
+		[2]string{"class", "container-fluid"},
 	}
 	for i := 0; i < len(attributes); i += 2 {
 		attrs = append(attrs, [2]string{
@@ -45,10 +47,10 @@ func FluidContainer(body Renderer, attributes ...interface{}) Renderer {
 			fmt.Sprint(attributes[i+1]),
 		})
 	}
-	return func(c context.Context) {
-		fmt.Print(`<div `, renderAttrs(attrs), `>`)
-		body(c)
-		fmt.Println(`</div>`)
+	return func(out io.Writer, c context.Context) {
+		fmt.Fprint(out, `<div `, renderAttrs(attrs), `>`)
+		body(out, c)
+		fmt.Fprintln(out, `</div>`)
 	}
 }
 
@@ -67,12 +69,12 @@ func renderAttrs(attrs Attributes) string {
 // S stands for String - it is used to insert arbitrary text in the code. Does
 // not do any sanitization.
 func S(args ...interface{}) Renderer {
-	return func(c context.Context) {
-		fmt.Print(args...)
+	return func(out io.Writer, c context.Context) {
+		fmt.Fprint(out, args...)
 	}
 }
 
 // Nil is a terminator for components that demand the existence of body
 func Nil() Renderer {
-	return func(c context.Context) {}
+	return func(io.Writer, context.Context) {}
 }
