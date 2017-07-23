@@ -23,6 +23,7 @@ const rootBottomTpl = `<script src="{{ .JQuery }}"></script>
 </body>
 </html>`
 
+// Bootstrap is the starting point to render the page.
 type Bootstrap struct {
 	baseCSS string
 	jQuery  string
@@ -30,6 +31,7 @@ type Bootstrap struct {
 	body    Renderer
 }
 
+// Render prints to standard output the rendered content.
 func (b *Bootstrap) Render(c context.Context) {
 	t := template.Must(template.New("rootTop").Parse(rootTopTpl))
 	var bufTop bytes.Buffer
@@ -53,31 +55,38 @@ func (b *Bootstrap) Render(c context.Context) {
 
 }
 
+// Option configures Bootstrap
 type Option func(*Bootstrap)
 
+// BaseCSS must be fed with the bootstrap's CSS URL
 func BaseCSS(css string) Option {
 	return func(b *Bootstrap) {
 		b.baseCSS = css
 	}
 }
+
+// JQuery must be fed with the bootstrap compatible jQuery.
 func JQuery(jQuery string) Option {
 	return func(b *Bootstrap) {
 		b.jQuery = jQuery
 	}
 }
 
+// BaseJS must be fed with the bootstrap's base javascript
 func BaseJS(js string) Option {
 	return func(b *Bootstrap) {
 		b.baseJS = js
 	}
 }
 
+// Body sets the initial point of rendering
 func Body(body Renderer) Option {
 	return func(b *Bootstrap) {
 		b.body = body
 	}
 }
 
+// New creates Bootstrap with basic useful defaults.
 func New(opts ...Option) *Bootstrap {
 	b := &Bootstrap{
 		baseCSS: "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
