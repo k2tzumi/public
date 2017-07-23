@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
+	"path/filepath"
 	"testing"
 )
 
@@ -17,16 +17,12 @@ func TestRender(t *testing.T) {
 	}
 
 	for _, file := range files {
-		if !strings.HasSuffix(file.Name(), ".go") {
-			continue
-		}
-
 		var got bytes.Buffer
-		cmd := exec.Command("go", "run", file.Name())
+		cmd := exec.Command("go", "run", filepath.Join(file.Name(), "got.go"))
 		cmd.Stdout = &got
 		cmd.Run()
 
-		expected, err := ioutil.ReadFile(strings.Replace(file.Name(), ".go", ".html", -1))
+		expected, err := ioutil.ReadFile(filepath.Join(file.Name(), "expect.html"))
 		if err != nil {
 			t.Fatal(err)
 		}
