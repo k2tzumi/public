@@ -1,0 +1,4 @@
+<?php
+//passes:RemoveSemicolonAfterCurly
+$value = 'hello';
+echo $value{2};

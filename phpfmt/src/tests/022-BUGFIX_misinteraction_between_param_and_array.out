@@ -1,0 +1,4 @@
+<?php
+function func($a, $b, array $c = [], array $d = [], $e) {
+	cmd();
+}

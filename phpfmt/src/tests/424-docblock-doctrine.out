@@ -1,0 +1,17 @@
+<?php
+//passes: PrettyPrintDocBlocks
+
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * @ORM\Entity
+ * @ORM\Table(name="option")
+ */
+class Option {
+	/**
+	 * @ORM\Id
+	 * @ORM\Column(type="integer")
+	 * @ORM\GeneratedValue
+	 */
+	protected $id;
+}

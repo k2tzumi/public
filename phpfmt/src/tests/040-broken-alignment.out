@@ -1,0 +1,13 @@
+<?php
+class ClassObject {
+	protected $ccccd = null;
+	protected $eeee  = false;
+	protected $uuu;
+
+	private $real_long_name_variable = false;
+
+	private $ppppp  = [];
+	private $gddddd = [];
+
+	public $a = 0;
+}

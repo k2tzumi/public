@@ -1,0 +1,32 @@
+<?php
+function func() {
+	$crit = [
+		['k' => 1],
+	];
+	$found_props = new ClassObject($crit);
+
+	$found_props = new ClassObject([['k' => 1]]);
+	$expected1   = $this->create(3, 456, 99, []);
+	return [ //Comment1
+		[1.22, 32.56, 0, $expected1, $found_props, new Mock([])], //Comment2
+		[0, 0, 0, null, new Mock([]), new Mock([])], //Comment3
+		[0, 0, 85, null, new Mock([]), new Mock([])], //Comment4
+		[0, 0, 85, $expected1, new Mock([]), $found_props],
+	];
+}
+function func2() {
+	$crit = [
+		['k' => 1],
+	];
+	$found_props = new ClassObject($crit);
+
+	$found_props = new ClassObject([['k' => 1]]);
+	$expected1   = $this->create(3, 456, 99, []);
+	//Comment 1
+	return [
+		[1.22, 32.56, 0, $expected1, $found_props, new Mock([])],
+		[0, 0, 0, null, new Mock([]), new Mock([])],
+		[0, 0, 85, null, new Mock([]), new Mock([])],
+		[0, 0, 85, $expected1, new Mock([]), $found_props],
+	];
+}

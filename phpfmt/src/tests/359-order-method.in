@@ -1,0 +1,4 @@
+<?php
+//passes:OrganizeClass
+class A {}
+class B {public function b() {}}
