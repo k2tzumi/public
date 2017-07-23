@@ -2,36 +2,56 @@ package btstrpr
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"io/ioutil"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 )
 
+var layoutTests = []struct {
+	b *Bootstrap
+	c context.Context
+}{
+	{New(
+		BaseCSS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
+		JQuery("https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"),
+		BaseJS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
+	), context.Background()},
+	{New(
+		BaseCSS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
+		JQuery("https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"),
+		BaseJS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
+		Body(
+			Container(S("hello world")),
+		),
+	), context.Background()},
+	{New(
+		BaseCSS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
+		JQuery("https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"),
+		BaseJS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
+		Body(
+			Container(
+				S("hello world"),
+				"style", "margin: 0",
+			),
+		),
+	), context.Background()},
+}
+
 func TestRender(t *testing.T) {
-	os.Chdir("golden")
-	files, err := ioutil.ReadDir(".")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, file := range files {
+	for i, layout := range layoutTests {
 		var got bytes.Buffer
-		var errbuf bytes.Buffer
-		cmd := exec.Command("go", "run", filepath.Join(file.Name(), "got.go"))
-		cmd.Stdout = &got
-		cmd.Stderr = &errbuf
-		cmd.Run()
+		layout.b.Render(layout.c, &got)
 
-		expected, err := ioutil.ReadFile(filepath.Join(file.Name(), "expect.html"))
+		fn := filepath.Join("golden", fmt.Sprint(i, ".html"))
+		expected, err := ioutil.ReadFile(fn)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if result := bytes.Compare(got.Bytes(), expected); result != 0 {
-			t.Error(file.Name(), "error")
-			t.Log("stderr:", errbuf.String())
+			t.Error(fn, "error")
 			t.Log("got:", got.String())
 			t.Log("len:", len(got.String()))
 			t.Log("expected:", string(expected))
