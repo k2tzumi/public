@@ -38,6 +38,9 @@ func monitorWorkDir(ctx context.Context, wd string, patterns, ignores []string) 
 		}
 		if info.IsDir() {
 			for _, skipDir := range ignores {
+				if skipDir == "" {
+					continue
+				}
 				if strings.HasPrefix(path, filepath.Join(wd, skipDir)) {
 					return filepath.SkipDir
 				}
@@ -51,6 +54,7 @@ func monitorWorkDir(ctx context.Context, wd string, patterns, ignores []string) 
 					memo[dir] = struct{}{}
 					_ = watcher.Add(dir)
 				}
+				break
 			}
 		}
 		return nil
