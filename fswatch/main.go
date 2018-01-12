@@ -48,6 +48,10 @@ func main() {
 		cancel()
 	}()
 
+	if len(flag.Args()) == 0 {
+		log.Fatalln("no file specified")
+	}
+
 	patterns, ignores, cmd := trimSpaces(strings.Split(flag.Arg(0), ",")), trimSpaces(strings.Split(*ignore, ",")), strings.Join(flag.Args()[1:], " ")
 	wd, err := os.Getwd()
 	if err != nil {
