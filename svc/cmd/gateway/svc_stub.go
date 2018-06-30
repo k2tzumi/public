@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 
-	"cirello.io/svc/jwt"
+	"cirello.io/svc/pkg/jwt"
 	"golang.org/x/crypto/acme/autocert"
 )
 
