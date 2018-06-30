@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"cirello.io/svc/jwt"
+	"cirello.io/svc/pkg/jwt"
 )
 
 func detectedClientCertificate(r *http.Request) *x509.Certificate {

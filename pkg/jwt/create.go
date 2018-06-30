@@ -1,5 +1,5 @@
 // Package jwt manipulates JWT tokens.
-package jwt // import "cirello.io/svc/jwt"
+package jwt // import "cirello.io/svc/pkg/jwt"
 
 import (
 	"crypto/x509"
