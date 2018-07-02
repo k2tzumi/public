@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha1"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
@@ -12,11 +13,37 @@ import (
 	"cirello.io/svc/pkg/jwt"
 )
 
-func detectedClientCertificate(r *http.Request) *x509.Certificate {
-	if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 && len(r.TLS.PeerCertificates[0].EmailAddresses) > 0 {
-		return r.TLS.PeerCertificates[0]
+type allowedCertificates map[string][][sha1.Size]byte // map of emails to list of certificates SHA1
+
+func detectedClientCertificate(r *http.Request, acs allowedCertificates) *x509.Certificate {
+	anyCertificateFound := r.TLS != nil && len(r.TLS.PeerCertificates) > 0 &&
+		len(r.TLS.PeerCertificates[0].EmailAddresses) == 1
+	if !anyCertificateFound {
+		return nil
+	}
+
+	chosenCertificate := r.TLS.PeerCertificates[0]
+	fingerprint := sha1.Sum(chosenCertificate.Raw)
+	email := chosenCertificate.EmailAddresses[0]
+	possibleCertificates, ok := acs[email]
+	if !ok {
+		return nil
+	}
+	for _, pc := range possibleCertificates {
+		if sha1Equals(pc, fingerprint) {
+			return chosenCertificate
+		}
 	}
 	return nil
+}
+
+func sha1Equals(a, b [sha1.Size]byte) bool {
+	for i := 0; i < sha1.Size; i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func stripPort(hostport string) string {
