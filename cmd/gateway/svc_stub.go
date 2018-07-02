@@ -5,9 +5,11 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"cirello.io/svc/pkg/jwt"
 	"golang.org/x/crypto/acme/autocert"
@@ -31,6 +33,15 @@ func services() {
 			m.HTTPHandler(http.HandlerFunc(nil))))
 	}()
 
+	var allowedCertificates allowedCertificates
+	clientCertsFD, err := os.Open("client-certificates-signature.json")
+	if err != nil {
+		log.Fatalln("unable to open the client certificate signatures file", err)
+	}
+	if err := json.NewDecoder(clientCertsFD).Decode(&allowedCertificates); err != nil {
+		log.Fatalln("unable to parse client certificate signatures")
+	}
+
 	certBytes, err := ioutil.ReadFile("ca.pem")
 	if err != nil {
 		log.Fatalln("Unable to read ca.pem", err)
@@ -52,7 +63,7 @@ func services() {
 			ClientCAs:      clientCAs,
 		},
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if cert := detectedClientCertificate(r); cert != nil {
+			if cert := detectedClientCertificate(r, allowedCertificates); cert != nil {
 				token, err := jwt.CreateFromCert(r.Host, certBytes, cert)
 				if err == nil {
 					r.Header.Set("Authorization", "bearer "+token)
