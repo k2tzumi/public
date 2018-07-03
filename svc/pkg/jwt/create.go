@@ -3,6 +3,7 @@ package jwt // import "cirello.io/svc/pkg/jwt"
 
 import (
 	"crypto/x509"
+	"time"
 
 	"cirello.io/errors"
 	jwt "github.com/dgrijalva/jwt-go"
@@ -10,8 +11,6 @@ import (
 
 // ServiceClaims define the set of claims used by cirello.io services.
 type ServiceClaims struct {
-	jwt.StandardClaims
-
 	// Email is the actor who is logging in.
 	Email string
 	// Target defines to which service this token was created for.
@@ -19,6 +18,8 @@ type ServiceClaims struct {
 	// Trust defines the trust level so to give the application some context
 	// on how it should handle low-trust logins.
 	Trust string
+
+	jwt.StandardClaims
 }
 
 // CreateFromCert a JWT whose content indicate a high-trust login.
@@ -44,10 +45,13 @@ func CreateFromCert(svcName string, caPEM []byte, cert *x509.Certificate) (strin
 }
 
 // CreateFromEmail a JWT whose content indicate a low-trust login.
-func CreateFromEmail(svcName string, caPEM []byte, email string) (string, error) {
+func CreateFromEmail(svcName string, caPEM []byte, email string, expiration time.Duration) (string, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS512,
 		&ServiceClaims{
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: time.Now().Add(expiration).Unix(),
+			},
 			Email:  email,
 			Target: svcName,
 			Trust:  "low",
