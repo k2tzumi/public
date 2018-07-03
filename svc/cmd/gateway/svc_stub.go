@@ -71,6 +71,9 @@ func services() {
 			} else if cookie, err := r.Cookie(gatewayTokenCookie); err != nil || cookie.Value == "" {
 				handleSSOLogin(r.Host, certBytes, w, r)
 				return
+			} else if token, _, err := jwt.Parse(cookie.Value, certBytes); err != nil || !token.Valid {
+				handleSSOLogin(r.Host, certBytes, w, r)
+				return
 			} else {
 				r.Header.Set("Authorization", "bearer "+cookie.Value)
 			}

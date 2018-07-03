@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 
 	"cirello.io/svc/pkg/jwt"
 )
@@ -98,7 +99,7 @@ func handleSSOLogin(svcName string, caPEM []byte, w http.ResponseWriter, r *http
 			return
 		}
 
-		rawToken, err := jwt.CreateFromEmail(svcName, caPEM, tokenValidation.Email)
+		rawToken, err := jwt.CreateFromEmail(svcName, caPEM, tokenValidation.Email, 1*time.Hour)
 		if err != nil {
 			log.Println("cannot parse token validation response:", err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized),
