@@ -23,20 +23,24 @@ type ServiceClaims struct {
 }
 
 // CreateFromCert a JWT whose content indicate a high-trust login.
-func CreateFromCert(svcName string, caPEM []byte, cert *x509.Certificate) (string, error) {
+func CreateFromCert(svcName string, caPEM []byte, cert *x509.Certificate, trustedHost bool) (string, error) {
 	if len(cert.EmailAddresses) == 0 {
 		return "", errors.E("certificate missing email")
 	} else if len(cert.EmailAddresses) > 1 {
 		return "", errors.E("multiple emails in the same certificate - cannot choose one")
 	}
 
+	trust := "medium"
+	if trustedHost {
+		trust = "high"
+	}
 	email := cert.EmailAddresses[0]
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS512,
 		&ServiceClaims{
 			Email:  email,
 			Target: svcName,
-			Trust:  "high",
+			Trust:  trust,
 		},
 	)
 
