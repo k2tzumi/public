@@ -64,7 +64,7 @@ func services() {
 		},
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if cert := detectedClientCertificate(r, allowedCertificates); cert != nil {
-				token, err := jwt.CreateFromCert(r.Host, certBytes, cert)
+				token, err := jwt.CreateFromCert(r.Host, certBytes, cert, false)
 				if err == nil {
 					r.Header.Set("Authorization", "bearer "+token)
 				}
