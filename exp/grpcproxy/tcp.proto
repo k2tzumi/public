@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package main;
+
+service Proxy {
+	rpc Proxy(stream Packet) returns (stream Packet) {}
+}
+
+message Packet {
+	Peers peers = 1;
+	bytes body = 2;
+}
+
+message Peers {
+	int64 connID = 1;
+	string rightHandAddr = 2;
+}
