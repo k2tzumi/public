@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"log"
 	"net"
@@ -18,11 +19,13 @@ func main() {
 			log.Fatal(err)
 		}
 
-		scanner := bufio.NewScanner(conn)
-		for scanner.Scan() {
+		go func() {
+			scanner := bufio.NewScanner(conn)
+			scanner.Scan()
 			fmt.Println(scanner.Text())
-			conn.Write(scanner.Bytes())
-		}
+			conn.Write(bytes.ToUpper(scanner.Bytes()))
+			conn.Close()
+		}()
 	}
 
 }
