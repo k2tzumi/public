@@ -7,6 +7,7 @@ require (
 	github.com/auth0/go-jwt-middleware v0.0.0-20170425171159-5493cabe49f7
 	github.com/dgrijalva/jwt-go v0.0.0-20180309000000-06ea1031745c
 	github.com/elazarl/go-bindata-assetfs v1.0.0
+	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/websocket v1.2.0
 	github.com/jmoiron/sqlx v0.0.0-20180614180643-0dae4fefe7c0
 	github.com/mattn/go-sqlite3 v1.9.0
