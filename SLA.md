@@ -12,6 +12,8 @@ Uptime
 
 	If the packages have tests enabled, then the packages will build successfully, and have their tests pass at least 95% of the time in a year.
 
+	Check a summary of building state at the [dashboard](BUILD-DASHBOARD.md).
+
 Response Time
 -------------
 
