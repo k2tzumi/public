@@ -1,7 +1,0 @@
-cirello.io v0.0.5 h1:6cBcR1iNFnVsMTNFr1P/BkC9lpF4kUNtMLYH7v8obNs=
-cirello.io v0.0.5/go.mod h1:8RYqLAicUnCP41ptW97CPSIbUL7TJ4Yxz6mtV44hbss=
-cirello.io/errors v0.0.0-20180708022723-e0b779880b2e/go.mod h1:G7mAYYxgmS0lVkHyy2hEOLQCFB0DlQFTMLWggykrydY=
-github.com/dgrijalva/jwt-go v0.0.0-20180309000000-06ea1031745c h1:LnqW56R184pj0hxdehlz4m5H9Aqx5Z4u7NJm9XQaw14=
-github.com/dgrijalva/jwt-go v0.0.0-20180309000000-06ea1031745c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
-github.com/dgrijalva/jwt-go v1.0.2 h1:KPldsxuKGsS2FPWsNeg9ZO18aCrGKujPoWXn2yo+KQM=
-github.com/dgrijalva/jwt-go v1.0.2/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
