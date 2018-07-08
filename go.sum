@@ -1,5 +1,11 @@
+cirello.io v0.0.5 h1:6cBcR1iNFnVsMTNFr1P/BkC9lpF4kUNtMLYH7v8obNs=
+cirello.io v0.0.5/go.mod h1:8RYqLAicUnCP41ptW97CPSIbUL7TJ4Yxz6mtV44hbss=
 cirello.io/errors v0.0.0-20180627134428-be5b1a580252/go.mod h1:EGeXTbC2JZmq7lFJ3wJXj2Nw1q6oLd7VHbznWcBrN2E=
+cirello.io/errors v0.0.0-20180708021427-e9dc91d01483/go.mod h1:G7mAYYxgmS0lVkHyy2hEOLQCFB0DlQFTMLWggykrydY=
+github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc h1:cAKDfWh5VpdgMhJosfJnn5/FoN2SRZ4p7fJNX58YPaU=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
+github.com/dgrijalva/jwt-go v0.0.0-20180309000000-06ea1031745c h1:LnqW56R184pj0hxdehlz4m5H9Aqx5Z4u7NJm9XQaw14=
 github.com/dgrijalva/jwt-go v0.0.0-20180309000000-06ea1031745c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/elazarl/go-bindata-assetfs v1.0.0/go.mod h1:v+YaWX3bdea5J/mo8dSETolEo7R71Vk1u8bnjau5yw4=
+golang.org/x/crypto v0.0.0-20180621125126-a49355c7e3f8 h1:h7zdf0RiEvWbYBKIx4b+q41xoUVnMmvsGZnIVE5syG8=
 golang.org/x/crypto v0.0.0-20180621125126-a49355c7e3f8/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
