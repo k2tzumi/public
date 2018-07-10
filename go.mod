@@ -6,7 +6,7 @@ require (
 	github.com/andybalholm/cascadia v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20170425171159-5493cabe49f7
 	github.com/aws/aws-sdk-go v1.14.22
-	github.com/dgrijalva/jwt-go v0.0.0-20180309000000-06ea1031745c
+	github.com/dgrijalva/jwt-go v3.2.0
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-ini/ini v1.37.0
