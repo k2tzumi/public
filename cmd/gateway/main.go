@@ -1,3 +1,4 @@
+// Command gateway implements an edge reverse-proxy used for serving Go packages and static content.
 package main
 
 import (
