@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Command blackholedns implements a simple DNS daemon that diverts undesired
+// requests to blackhole.
 package main // import "cirello.io/blackholedns"
 
 import (
