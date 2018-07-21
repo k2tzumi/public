@@ -15,16 +15,8 @@
 import React from 'react'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
-import {
-  Button,
-  Col,
-  Form,
-  Grid,
-  PageHeader,
-  Row,
-  FormControl
-} from 'react-bootstrap'
-import { loadSnippetsByUser, saveSnippet } from './actions'
+import { Button, Col, Form, Grid, PageHeader, Row, FormControl } from 'react-bootstrap'
+import { loadSnippets, saveSnippet } from './actions'
 import groupBy from 'lodash/groupBy'
 import moment from 'moment'
 
@@ -33,17 +25,19 @@ import './style.css'
 class SubmitSnippetPage extends React.Component {
   constructor (props) {
     super(props)
+    moment()
 
     this.setContent = this.setContent.bind(this)
     this.submit = this.submit.bind(this)
 
     this.state = {
-      content: ''
+      content: '',
+      updateVisible: false
     }
   }
 
   componentDidMount () {
-    this.props.loadSnippetsByUser()
+    this.props.loadSnippets()
   }
 
   setContent (e) {
@@ -51,9 +45,11 @@ class SubmitSnippetPage extends React.Component {
     var content = e.target.value
     this.setState({ content })
   }
+
   submit (e) {
     e.preventDefault()
-    this.props.saveSnippet(this.state.content)
+    var content = this.state.content
+    this.props.saveSnippet(content)
   }
 
   render () {
@@ -61,13 +57,19 @@ class SubmitSnippetPage extends React.Component {
       return v.week_start
     })
 
+    let groupedSnippets = {}
+    for (let i in snippets) {
+      groupedSnippets[i] = groupBy(snippets[i], function (v) {
+        return v.user.team
+      })
+    }
+
     return (
       <Grid className='user-snippet-grid'>
         <Row>
-          <Col>
+          <Col md={12}>
             <div className='user-snippet-container'>
               <PageHeader> What did you do past week? </PageHeader>
-
               <Form onSubmit={this.submit}>
                 <FormControl componentClass='textarea' className='user-snippet-content' onChange={this.setContent} />
                 <div className='user-snippet-submit'><Button type='submit'>submit</Button></div>
@@ -76,16 +78,31 @@ class SubmitSnippetPage extends React.Component {
           </Col>
         </Row>
         <Row>
-          <Col>
-            <PageHeader> Past Snippets </PageHeader>
-            {
-              Object.entries(snippets).map((week) => (
-                <div key={week[0]} className='user-past-snippet'>
-                  <strong>Week starting {moment(week[0]).format('MMMM Do YYYY')}: </strong>
-                  { week[1].map((snippet) => (<div key={snippet.user.email}>{snippet.contents}</div>)) }
-                </div>
-              ))
-            }
+          <Col md={12}>
+            <div className='user-snippet-container'>
+              <PageHeader>Snippets <button>filter</button></PageHeader>
+              {
+                Object.entries(groupedSnippets).map(
+                  (week) => (
+                    <div key={week[0]} className='user-past-snippet'>
+                      <strong>Week starting {moment(week[0]).format('MMMM Do YYYY')}: </strong>
+                      {Object.entries(week[1]).map((team) => (
+                        <div key={team[0]} className='user-past-snippet'>
+                          <em>{team[0]}</em>
+                          {team[1].map(
+                            (snippet) => (
+                              <div key={snippet.user.email} className='user-snippet'>
+                                <div>{snippet.user.email}: {snippet.contents || 'no snippet'} </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )
+              }
+            </div>
           </Col>
         </Row>
       </Grid>
@@ -95,7 +112,7 @@ class SubmitSnippetPage extends React.Component {
 
 const s2p = state => ({ snippets: state.snippets.snippets })
 const d2p = dispatch => bindActionCreators({
-  loadSnippetsByUser,
+  loadSnippets,
   saveSnippet
 }, dispatch)
 export default connect(s2p, d2p)(SubmitSnippetPage)

@@ -14,9 +14,9 @@
 
 // import { push } from 'react-router-redux'
 
-export function loadSnippetsByUser () {
+export function loadSnippets () {
   return (dispatch) => {
-    fetch('http://localhost:5100/snippetsByUser', {
+    fetch('http://localhost:5100/state', {
       credentials: 'include'
     })
     .then(res => res.json())
@@ -25,7 +25,7 @@ export function loadSnippetsByUser () {
     })
     .then((snippets) => {
       dispatch({
-        type: 'snippets/USER_SNIPPETS_LOADED',
+        type: 'snippets/LOADED',
         snippets: snippets
       })
     })
@@ -44,7 +44,7 @@ export function saveSnippet (contents) {
       console.log('cannot store snippet:', e)
     })
     .then(() => {
-      loadSnippetsByUser()(dispatch)
+      loadSnippets()(dispatch)
     })
   }
 }

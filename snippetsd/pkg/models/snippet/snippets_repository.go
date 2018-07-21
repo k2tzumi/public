@@ -14,13 +14,9 @@
 
 package snippet
 
-import "cirello.io/snippetsd/pkg/models/user"
-
 // Repository provides a repository of Snippets.
 type Repository interface {
 	Bootstrap() error
 	All() ([]*Snippet, error)
-	GetByUser(*user.User) ([]*Snippet, error)
-	Current() ([]*Snippet, error)
 	Save(snippet *Snippet) (*Snippet, error)
 }

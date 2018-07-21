@@ -14,12 +14,9 @@
 
 package snippets // import "cirello.io/snippetsd/pkg/infra/repositories/internal/sqlite3/snippets"
 import (
-	"time"
-
 	"cirello.io/errors"
 	"cirello.io/snippetsd/pkg/infra/repositories/internal/sqlite3/users"
 	"cirello.io/snippetsd/pkg/models/snippet"
-	"cirello.io/snippetsd/pkg/models/user"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -86,41 +83,11 @@ func (b *Repository) All() ([]*snippet.Snippet, error) {
 	return snippets, nil
 }
 
-// GetByUser returns a user's snippets.
-func (b *Repository) GetByUser(user *user.User) ([]*snippet.Snippet, error) {
-	var snippets []*snippet.Snippet
-	err := b.db.Select(&snippets, "SELECT * FROM snippets WHERE user_id = $1 ORDER BY week_start DESC", user.ID)
-	if err != nil {
-		return snippets, errors.E(err, "cannot load snippets")
-	}
-	if err := b.loadUsers(&snippets); err != nil {
-		return snippets, errors.E(err, "cannot load users information")
-	}
-	return snippets, nil
-}
-
-// Current returns the current week snippets.
-func (b *Repository) Current() ([]*snippet.Snippet, error) {
-	var snippets []*snippet.Snippet
-	weekStart := 7 * 24 * time.Hour // TODO: calculate correct week start
-	err := b.db.Select(&snippets,
-		"SELECT * FROM snippets WHERE week_start >= $1", weekStart)
-	if err != nil {
-		return snippets, errors.E(err, "cannot load snippets")
-	}
-	if err := b.loadUsers(&snippets); err != nil {
-		return snippets, errors.E(err, "cannot load users information")
-	}
-	return snippets, nil
-}
-
 // Save one snippet entry.
 func (b *Repository) Save(snippet *snippet.Snippet) (*snippet.Snippet, error) {
 	_, err := b.db.NamedExec(`
-		INSERT INTO snippets (user_id, week_start, contents)
+		REPLACE INTO snippets (user_id, week_start, contents)
 		VALUES (:user_id, :week_start, :contents)
-		ON CONFLICT(user_id, week_start)
-		DO UPDATE SET contents = :contents
 	`, snippet)
 	if err != nil {
 		return nil, errors.E(err, "upsert operation failed")

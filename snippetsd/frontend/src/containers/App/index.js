@@ -13,27 +13,12 @@
 // limitations under the License.
 
 import React from 'react'
-import { Route, Link } from 'react-router-dom'
-import { Nav, NavItem, Navbar } from 'react-bootstrap'
-import WeekPage from '../WeekPage'
+import { Route } from 'react-router-dom'
 import UserPage from '../UserPage'
 
 const App = () => (
   <div>
-    <Navbar>
-      <Navbar.Header>
-        <Navbar.Brand>
-          <Link to='/view'>Weekly snippets</Link>
-        </Navbar.Brand>
-      </Navbar.Header>
-      <Nav>
-        <NavItem componentClass={Link} eventKey={1}
-          href='/' to='/'>my snippets</NavItem>
-      </Nav>
-    </Navbar>
-
     <main>
-      <Route exact path='/view' component={WeekPage} />
       <Route exact path='/' component={UserPage} />
     </main>
   </div>

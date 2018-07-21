@@ -99,26 +99,6 @@ func (s *Server) state(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) snippetsByUser(w http.ResponseWriter, r *http.Request) {
-	user := user.WhoAmI(r.Context())
-	snippets, err := repositories.Snippets(s.db).GetByUser(user)
-	if err != nil {
-		log.Println("cannot load user's snippets:", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError),
-			http.StatusInternalServerError)
-		return
-	}
-
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "    ")
-	if err := enc.Encode(snippets); err != nil {
-		log.Println("cannot marshal snippets:", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError),
-			http.StatusInternalServerError)
-		return
-	}
-}
-
 func (s *Server) storeSnippet(w http.ResponseWriter, r *http.Request) {
 	user := user.WhoAmI(r.Context())
 

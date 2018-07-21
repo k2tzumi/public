@@ -14,6 +14,10 @@
 	overflow: hidden;
 }
 
+.user-snippet-container .page-header {
+	text-align: center;
+}
+
 .user-past-snippet{
 	margin-left: 30px;
 	margin-bottom: 10px;
