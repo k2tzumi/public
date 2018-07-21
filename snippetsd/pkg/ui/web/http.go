@@ -43,7 +43,6 @@ func New(db *sqlx.DB) *Server {
 
 func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/storeSnippet", s.storeSnippet)
-	s.mux.HandleFunc("/snippetsByUser", s.snippetsByUser)
 	s.mux.HandleFunc("/state", s.state)
 	s.mux.HandleFunc("/", http.NotFound)
 }
