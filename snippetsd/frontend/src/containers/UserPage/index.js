@@ -15,7 +15,7 @@
 import React from 'react'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
-import { Button, Col, Form, Grid, PageHeader, Row, FormControl } from 'react-bootstrap'
+import { Button, Col, Form, Grid, PageHeader, Row, FormControl, Panel } from 'react-bootstrap'
 import { loadSnippets, saveSnippet } from './actions'
 import groupBy from 'lodash/groupBy'
 import moment from 'moment'
@@ -68,7 +68,7 @@ class SubmitSnippetPage extends React.Component {
       <Grid className='user-snippet-grid'>
         <Row>
           <Col md={12}>
-            <div className='user-snippet-container'>
+            <div className='user-snippet-current-container'>
               <PageHeader> What did you do past week? </PageHeader>
               <Form onSubmit={this.submit}>
                 <FormControl componentClass='textarea' className='user-snippet-content' onChange={this.setContent} />
@@ -79,29 +79,29 @@ class SubmitSnippetPage extends React.Component {
         </Row>
         <Row>
           <Col md={12}>
-            <div className='user-snippet-container'>
+            <div className='user-snippet-past-container'>
               <PageHeader>Snippets <button>filter</button></PageHeader>
-              {
-                Object.entries(groupedSnippets).map(
-                  (week) => (
-                    <div key={week[0]} className='user-past-snippet'>
-                      <strong>Week starting {moment(week[0]).format('MMMM Do YYYY')}: </strong>
-                      {Object.entries(week[1]).map((team) => (
-                        <div key={team[0]} className='user-past-snippet'>
-                          <em>{team[0]}</em>
-                          {team[1].map(
-                            (snippet) => (
-                              <div key={snippet.user.email} className='user-snippet'>
-                                <div>{snippet.user.email}: {snippet.contents || 'no snippet'} </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )
-                )
-              }
+              {Object.entries(groupedSnippets).map(
+              (week) => (
+                <Panel key={week[0]} className='user-past-snippet'>
+                  <Panel.Heading>Week starting {moment(week[0]).format('MMMM Do YYYY')}: </Panel.Heading>
+                  <Panel.Body>
+                    {Object.entries(week[1]).map((team) => (
+                      <div key={team[0]} className='user-past-snippet'>
+                        <em>{team[0]}</em>
+                        {team[1].map(
+                        (snippet) => (
+                          <div key={snippet.user.email} className='user-snippet'>
+                            <div>{snippet.user.email}: {snippet.contents || 'no snippet'} </div>
+                          </div>
+                        )
+                      )}
+                      </div>
+                    ))}
+                  </Panel.Body>
+                </Panel>
+              )
+            )}
             </div>
           </Col>
         </Row>

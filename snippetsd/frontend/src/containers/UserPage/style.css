@@ -9,13 +9,9 @@
 	text-align: center;
 }
 
-.user-snippet-container {
+.user-snippet-current-container {
 	height: 270px;
 	overflow: hidden;
-}
-
-.user-snippet-container .page-header {
-	text-align: center;
 }
 
 .user-past-snippet{
