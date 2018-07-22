@@ -1,7 +1,7 @@
-image: abstruse_builder:latest
+image: abstruse_golang:latest
 
 matrix:
-  - env: AWS_ACCESS_KEY_ID="AKIAIH6BUPODEOU2DXNQ" AWS_SECRET_ACCESS_KEY="ZzwT95GE8mbC5c73lEiuBLGZV+/u8Z2PJK/cF8PJ"
+  - env: AWS_ACCESS_KEY_ID="fake-AKIAIH6BUPODEOU2DXNQ" AWS_SECRET_ACCESS_KEY="fake-ZzwT95GE8mbC5c73lEiuBLGZV+/u8Z2PJK/cF8PJ"
 
 script:
   - docker rm -f dynamoDB || echo "dynamoDB not present"
