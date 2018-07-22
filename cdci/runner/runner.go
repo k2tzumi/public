@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"cirello.io/cdci/api"
+	"cirello.io/exp/cdci/api"
 )
 
 // Run executes a recipe.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"cirello.io/cdci/api"
+	"cirello.io/exp/cdci/api"
 	"github.com/davecgh/go-spew/spew"
 )
 
