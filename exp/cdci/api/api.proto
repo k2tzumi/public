@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package api;
+
+service Runner {
+    rpc Run(stream RunRequest) returns (stream RunResponse) {}
+}
+
+message Recipe {
+    repeated string environment = 1;
+    repeated Step steps = 2;
+}
+
+message Step {
+    repeated string environment = 1;
+    repeated string commands = 2;
+}
+
+message RunRequest {
+    Recipe recipe = 1;
+}
+
+message RunResponse {
+    string output = 1;
+    bool success = 2;
+}
