@@ -11,6 +11,15 @@ import (
 // Server dispatches new builds and collects the logs.
 type Server struct {
 	agents sync.Map // map[int64]time.Time - map of agentID to last ping
+
+	tasks chan *api.Recipe
+}
+
+// New prepares a new server.
+func New(tasks chan *api.Recipe) *Server {
+	return &Server{
+		tasks: tasks,
+	}
 }
 
 // Run is the pipe where new tasks are dispatched to agents.
@@ -32,7 +41,8 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 				}
 				switch v := r.GetResponse().(type) {
 				case *api.RunResponse_Result:
-					spew.Dump(v)
+					s.agents.Store(v.Result.GetAgentID(), time.Now())
+					spew.Dump("got result back (and updated pong)", v)
 				case *api.RunResponse_Pong:
 					s.agents.Store(v.Pong.GetAgentID(), time.Now())
 					spew.Dump("got pong back", v.Pong)
@@ -54,6 +64,16 @@ mainloop:
 				},
 			})
 			spew.Dump("pinging...", err)
+		case recipe, ok := <-s.tasks:
+			if !ok {
+				break mainloop
+			}
+			err := srv.Send(&api.RunRequest{
+				Action: &api.RunRequest_Recipe{
+					Recipe: recipe,
+				},
+			})
+			spew.Dump("worked dispatched...", err)
 		}
 	}
 	if agentErr != nil {
