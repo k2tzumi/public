@@ -30,7 +30,6 @@ func Run() {
 	app.Name = "cdci"
 	app.Usage = "dirty continuous integration service"
 	app.Version = "0.0.1"
-
 	cmds := &commands{}
 	app.Before = cmds.bootstrap
 	app.Commands = []cli.Command{
