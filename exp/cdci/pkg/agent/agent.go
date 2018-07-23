@@ -5,6 +5,7 @@ import (
 
 	"cirello.io/errors"
 	"cirello.io/exp/cdci/pkg/api"
+	"cirello.io/exp/cdci/pkg/runner"
 	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/grpc"
 )
@@ -49,6 +50,11 @@ func (a *Agent) Run() error {
 			case *api.RunRequest_Ping:
 				pipe.Send(pongMessage(a.agentID))
 				spew.Dump("I just pong")
+			case *api.RunRequest_Recipe:
+				result, err := runner.Run(context.TODO(), v.Recipe)
+				result.AgentID = a.agentID
+				spew.Dump(result, err)
+				pipe.Send(resultMessage(result))
 			default:
 				spew.Dump("something else???", v)
 			}
@@ -60,6 +66,14 @@ func pongMessage(agentID int64) *api.RunResponse {
 	return &api.RunResponse{
 		Response: &api.RunResponse_Pong{
 			Pong: &api.Pong{AgentID: agentID},
+		},
+	}
+}
+
+func resultMessage(result *api.Result) *api.RunResponse {
+	return &api.RunResponse{
+		Response: &api.RunResponse_Result{
+			Result: result,
 		},
 	}
 }

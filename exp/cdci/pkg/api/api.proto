@@ -8,8 +8,8 @@ service Runner {
 
 message Recipe {
     int64 id = 1;
-    repeated string environment = 2;
-    string commands = 3;
+    repeated string environment = 3;
+    string commands = 4;
 }
 
 message RunRequest {
@@ -31,6 +31,7 @@ message Ping {}
 message Result {
     string output = 1;
     bool success = 2;
+    int64 agentID = 3;
 }
 
 message Pong {

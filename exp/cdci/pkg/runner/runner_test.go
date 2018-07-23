@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"cirello.io/exp/cdci/api"
+	"cirello.io/exp/cdci/pkg/api"
 )
 
 func TestRun(t *testing.T) {
