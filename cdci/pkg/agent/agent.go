@@ -30,9 +30,7 @@ func (a *Agent) Run() error {
 	if err != nil {
 		return errors.E(err, "cannot talk to server")
 	}
-
 	spew.Dump("I connected to server")
-
 	ctx := pipe.Context()
 	for {
 		select {
@@ -45,7 +43,6 @@ func (a *Agent) Run() error {
 				return errors.E(err,
 					"cannot receive request from server")
 			}
-
 			switch v := r.GetAction().(type) {
 			case *api.RunRequest_Ping:
 				pipe.Send(pongMessage(a.agentID))
