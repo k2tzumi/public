@@ -3,14 +3,16 @@ package worker
 import (
 	"context"
 	"testing"
+
+	"cirello.io/exp/sdci/pkg/coordinator"
 )
 
 func TestRun(t *testing.T) {
-	recipe := &Recipe{
+	recipe := &coordinator.Recipe{
 		Environment: []string{"RECIPE_MSG=world"},
 		Commands:    "echo Hello, $RECIPE_MSG;",
 	}
-	response, err := Run(context.TODO(), recipe, ".")
+	response, err := run(context.TODO(), recipe, ".")
 	if err != nil {
 		t.Fatal(err)
 	}

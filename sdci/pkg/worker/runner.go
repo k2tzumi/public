@@ -1,6 +1,7 @@
 package worker // import "cirello.io/exp/sdci/pkg/worker"
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -18,10 +19,10 @@ set -e
 %s
 `
 
-func run(ctx context.Context, recipe *coordinator.Recipe, repoDir string) error {
+func run(ctx context.Context, recipe *coordinator.Recipe, repoDir string) (string, error) {
 	tmpfile, err := ioutil.TempFile(repoDir, "agent")
 	if err != nil {
-		return errors.E(errors.FailedPrecondition, err,
+		return "", errors.E(errors.FailedPrecondition, err,
 			"agent cannot create temporary file")
 	}
 	defer os.Remove(tmpfile.Name())
@@ -32,7 +33,9 @@ func run(ctx context.Context, recipe *coordinator.Recipe, repoDir string) error 
 	cmd.Dir = repoDir
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, recipe.Environment...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return errors.E(cmd.Run(), "failed when running builder")
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	err = cmd.Run()
+	return buf.String(), errors.E(err, "failed when running builder")
 }
