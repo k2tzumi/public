@@ -55,8 +55,9 @@ func main() {
 			return
 		}
 		jobs <- &buildRequest{
-			payload: &payload,
-			recipe:  recipe,
+			repoFullName: payload.Repository.FullName,
+			commit:       payload.Commit,
+			recipe:       recipe,
 		}
 	})
 	log.Fatal(http.ListenAndServe(":9090", nil))
@@ -84,17 +85,17 @@ type githubHookPayload struct {
 }
 
 type buildRequest struct {
-	payload *githubHookPayload
-	recipe  *runner.Recipe
+	repoFullName string
+	commit       string
+	recipe       *runner.Recipe
 }
 
 func worker(buildsDir string, jobs chan *buildRequest) {
 	for j := range jobs {
 		log.Println("checking out code...")
-		dir, name := filepath.Split(j.payload.Repository.FullName)
+		dir, name := filepath.Split(j.repoFullName)
 		repoDir := filepath.Join(buildsDir, dir, name)
-		if err := git.Checkout(j.recipe.Clone, repoDir,
-			j.payload.Commit); err != nil {
+		if err := git.Checkout(j.recipe.Clone, repoDir, j.commit); err != nil {
 			log.Println("cannot checkout code:", err)
 			continue
 		}
