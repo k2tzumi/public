@@ -31,7 +31,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	l, err := net.Listen("tcp", ":9090")
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
