@@ -35,11 +35,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		out, err := httputil.DumpRequest(r, true)
-		spew.Dump(err)
-		fmt.Println(string(out))
-	})
 	http.HandleFunc("/github-webhook/", func(w http.ResponseWriter, r *http.Request) {
 		var payload githubHookPayload
 		err := json.NewDecoder(r.Body).Decode(&payload)
@@ -59,6 +54,11 @@ func main() {
 			commit:       payload.Commit,
 			recipe:       recipe,
 		}
+	})
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		out, err := httputil.DumpRequest(r, true)
+		spew.Dump(err)
+		fmt.Println(string(out))
 	})
 	log.Fatal(http.ListenAndServe(":9090", nil))
 }
