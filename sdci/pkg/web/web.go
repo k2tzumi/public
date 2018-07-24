@@ -9,7 +9,6 @@ import (
 
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/coordinator"
-	"github.com/davecgh/go-spew/spew"
 )
 
 // Server implements the web-facing part of the CI service. For now, compatible
@@ -53,8 +52,7 @@ func (s *Server) Serve(l net.Listener) error {
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		out, err := httputil.DumpRequest(r, true)
-		spew.Dump(err)
-		fmt.Println(string(out))
+		fmt.Println(string(out), err)
 	})
 	return errors.E(http.Serve(l, mux), "error when serving web interface")
 }
