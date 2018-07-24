@@ -11,7 +11,12 @@ import (
 
 // Build consumes coordinator jobs.
 func Build(buildsDir string, c *coordinator.Coordinator) {
-	for job := c.Next(); job != nil; job = nil {
+	for {
+		job := c.Next()
+		if job == nil {
+			log.Println("no more jobs in the pipe, halting worker")
+			return
+		}
 		log.Println("checking out code...")
 		dir, name := filepath.Split(job.RepoFullName)
 		repoDir := filepath.Join(buildsDir, dir, name)
