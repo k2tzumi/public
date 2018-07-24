@@ -1,5 +1,5 @@
 workdir: $GOPATH/src/cirello.io/exp/sdci
 observe: *.go *.yaml
 ignore: /vendor
-build-backend: CC=gcc vgo install cirello.io/exp/sdci
+build-backend: CC=gcc vgo install cirello.io/exp/sdci/cmd/sdci
 server:        $GOPATH/bin/sdci

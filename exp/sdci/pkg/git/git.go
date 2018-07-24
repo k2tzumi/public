@@ -1,4 +1,4 @@
-package git // import "cirello.io/exp/sdci/git"
+package git // import "cirello.io/exp/sdci/pkg/git"
 import (
 	"log"
 	"os"
