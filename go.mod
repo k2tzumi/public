@@ -18,6 +18,7 @@ require (
 	github.com/jmoiron/sqlx v0.0.0-20180614180643-0dae4fefe7c0
 	github.com/mattn/go-sqlite3 v1.9.0
 	github.com/miekg/dns v1.0.8
+	github.com/nlopes/slack v0.2.0
 	github.com/urfave/cli v1.20.0
 	golang.org/x/crypto v0.0.0-20180621125126-a49355c7e3f8
 	golang.org/x/net v0.0.0-20180706051357-32a936f46389

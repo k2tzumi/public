@@ -3,15 +3,18 @@ package coordinator // import "cirello.io/exp/sdci/pkg/coordinator"
 // Recipe defines the execution steps and environment.
 type Recipe struct {
 	Clone       string
+	Slack       string
+	Channel     string
 	Environment []string
 	Commands    string
 }
 
 // Build defines the necessary data to run a build successfully.
 type Build struct {
-	RepoFullName string
-	Commit       string
-	Recipe       *Recipe
+	RepoFullName  string
+	CommitHash    string
+	CommitMessage string
+	Recipe        *Recipe
 }
 
 // Coordinator takes and dispatches build requests.

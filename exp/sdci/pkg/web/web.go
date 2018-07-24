@@ -45,9 +45,10 @@ func (s *Server) Serve(l net.Listener) error {
 			return
 		}
 		s.coordinator.Enqueue(&coordinator.Build{
-			RepoFullName: payload.Repository.FullName,
-			Commit:       payload.Commit,
-			Recipe:       recipe,
+			RepoFullName:  payload.Repository.FullName,
+			CommitHash:    payload.CommitHash,
+			CommitMessage: payload.HeadCommit.Message,
+			Recipe:        recipe,
 		})
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +59,10 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 type githubHookPayload struct {
-	Commit     string `json:"after"`
+	CommitHash string `json:"after"`
+	HeadCommit struct {
+		Message string `json:"message"`
+	} `json:"head_commit"`
 	Repository struct {
 		FullName string `json:"full_name"`
 	} `json:"repository"`
