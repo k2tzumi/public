@@ -1,4 +1,4 @@
-package runner // import "cirello.io/exp/sdci/runner"
+package worker // import "cirello.io/exp/sdci/pkg/worker"
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"os/exec"
 
 	"cirello.io/errors"
+	"cirello.io/exp/sdci/pkg/coordinator"
 )
 
 const execScript = `#!/bin/bash
@@ -17,15 +18,7 @@ set -e
 %s
 `
 
-// Recipe defines the execution steps and environment.
-type Recipe struct {
-	Clone       string
-	Environment []string
-	Commands    string
-}
-
-// Run executes a recipe.
-func Run(ctx context.Context, recipe *Recipe, repoDir string) error {
+func run(ctx context.Context, recipe *coordinator.Recipe, repoDir string) error {
 	tmpfile, err := ioutil.TempFile(repoDir, "agent")
 	if err != nil {
 		return errors.E(errors.FailedPrecondition, err,
