@@ -27,5 +27,6 @@ require (
 	google.golang.org/genproto v0.0.0-20180709204101-e92b11657268
 	google.golang.org/grpc v1.13.0
 	gopkg.in/urfave/cli.v1 v1.20.0
+	gopkg.in/yaml.v2 v2.2.1
 	rsc.io/qr v0.2.0
 )
