@@ -19,24 +19,27 @@ set -e
 
 // Recipe defines the execution steps and environment.
 type Recipe struct {
+	Clone       string
 	Environment []string
 	Commands    string
 }
 
 // Run executes a recipe.
-func Run(ctx context.Context, recipe *Recipe) (string, error) {
-	tmpfile, err := ioutil.TempFile("", "agent")
+func Run(ctx context.Context, recipe *Recipe, repoDir string) error {
+	tmpfile, err := ioutil.TempFile(repoDir, "agent")
 	if err != nil {
-		return "", errors.E(errors.FailedPrecondition, err,
+		return errors.E(errors.FailedPrecondition, err,
 			"agent cannot create temporary file")
 	}
-	defer os.Remove(tmpfile.Name()) // clean up
+	defer os.Remove(tmpfile.Name())
 	defer tmpfile.Close()
 	fmt.Fprintf(tmpfile, execScript, recipe.Commands)
 	tmpfile.Close()
 	cmd := exec.CommandContext(ctx, "/bin/sh", tmpfile.Name())
+	cmd.Dir = repoDir
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, recipe.Environment...)
-	out, err := cmd.CombinedOutput()
-	return string(out), err
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return errors.E(cmd.Run(), "failed when running builder")
 }
