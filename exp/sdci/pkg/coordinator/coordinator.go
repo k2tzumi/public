@@ -6,6 +6,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// Configuration defines the internal parameters for the application.
+type Configuration struct {
+	Concurrency map[string]int // map of recipe repo full name to concurrency.
+	Recipes     map[string]*Recipe
+}
+
 // Recipe defines the execution steps and environment.
 type Recipe struct {
 	Clone        string `db:"clone" yaml:"clone"`
