@@ -11,6 +11,8 @@ import (
 	"cirello.io/exp/sdci/pkg/coordinator"
 	"cirello.io/exp/sdci/pkg/web"
 	"cirello.io/exp/sdci/pkg/worker"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3" // SQLite3 driver
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -25,7 +27,11 @@ func main() {
 	if err := os.MkdirAll(buildsDir, os.ModePerm&0700); err != nil {
 		log.Fatalln("cannot create .sdci:", err)
 	}
-	coord := coordinator.New()
+	db, err := sqlx.Open("sqlite3", "sdci.db")
+	if err != nil {
+		log.Fatalln("cannot open database:", err)
+	}
+	coord := coordinator.New(db)
 	go worker.Build(buildsDir, coord)
 	recipes, err := loadRecipes()
 	if err != nil {
@@ -35,6 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
 	}
+	// TODO: handle coordinator disruptions.
 	s := web.New(recipes, coord)
 	log.Fatalln(s.Serve(l))
 }
