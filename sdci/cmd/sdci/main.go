@@ -36,7 +36,7 @@ func main() {
 	}()
 	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v", "src", "github.com")
 	worker.Start(buildsDir, coord, 1)
-	recipes, err := loadRecipes()
+	configuration, err := loadConfiguration()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,16 +44,16 @@ func main() {
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
 	}
-	s := web.New(recipes, coord)
+	s := web.New(configuration.Recipes, coord)
 	log.Fatalln(s.Serve(l))
 }
 
-func loadRecipes() (map[string]*coordinator.Recipe, error) {
+func loadConfiguration() (*coordinator.Configuration, error) {
 	fd, err := os.Open("sdci-config.yaml")
 	if err != nil {
 		return nil, errors.E(err, "cannot open configuration file")
 	}
-	var recipes map[string]*coordinator.Recipe
-	err = yaml.NewDecoder(fd).Decode(&recipes)
-	return recipes, errors.E(err, "cannot parse configuration")
+	var c coordinator.Configuration
+	err = yaml.NewDecoder(fd).Decode(&c)
+	return &c, errors.E(err, "cannot parse configuration")
 }
