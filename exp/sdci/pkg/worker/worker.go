@@ -38,7 +38,7 @@ func Build(buildsDir string, c *coordinator.Coordinator) {
 		log.Println("building result:", err)
 
 		msg := fmt.Sprintln("build", job.ID, "for", job.RepoFullName,
-			"commit:", job.CommitMessage,
+			"commit:`", job.CommitMessage, "`",
 			"("+job.CommitHash+")", "done")
 		if err != nil {
 			msg = fmt.Sprint("-  errored with:", err)
