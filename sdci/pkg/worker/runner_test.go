@@ -9,7 +9,7 @@ import (
 
 func TestRun(t *testing.T) {
 	recipe := &coordinator.Recipe{
-		Environment: []string{"RECIPE_MSG=world"},
+		Environment: "RECIPE_MSG=world",
 		Commands:    "echo Hello, $RECIPE_MSG;",
 	}
 	response, err := run(context.TODO(), recipe, ".")
