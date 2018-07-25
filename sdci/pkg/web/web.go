@@ -10,21 +10,21 @@ import (
 
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/coordinator"
+	"cirello.io/exp/sdci/pkg/models"
 )
 
 // Server implements the web-facing part of the CI service. For now, compatible
 // only with Github Webhooks.
 type Server struct {
-	recipes     map[string]*coordinator.Recipe // map of fullName to recipes
+	recipes     map[string]*models.Recipe // map of fullName to recipes
 	coordinator *coordinator.Coordinator
 }
 
 // New creates a new web-facing server.
-func New(recipes map[string]*coordinator.Recipe,
-	coordinator *coordinator.Coordinator) *Server {
+func New(r map[string]*models.Recipe, c *coordinator.Coordinator) *Server {
 	return &Server{
-		recipes:     recipes,
-		coordinator: coordinator,
+		recipes:     r,
+		coordinator: c,
 	}
 }
 
@@ -46,7 +46,7 @@ func (s *Server) Serve(l net.Listener) error {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		s.coordinator.Enqueue(&coordinator.Build{
+		s.coordinator.Enqueue(&models.Build{
 			RepoFullName:  payload.Repository.FullName,
 			CommitHash:    payload.CommitHash,
 			CommitMessage: payload.HeadCommit.Message,
