@@ -15,11 +15,11 @@ type Recipe struct {
 
 // Build defines the necessary data to run a build successfully.
 type Build struct {
-	ID            int64   `db:"id"`
-	RepoFullName  string  `db:"repo_full_name"`
-	CommitHash    string  `db:"commit_hash"`
-	CommitMessage string  `db:"commit_message"`
-	Recipe        *Recipe `db:"recipe"`
+	ID            int64  `db:"id"`
+	RepoFullName  string `db:"repo_full_name"`
+	CommitHash    string `db:"commit_hash"`
+	CommitMessage string `db:"commit_message"`
+	*Recipe
 }
 
 // Coordinator takes and dispatches build requests.
@@ -38,11 +38,31 @@ func New(db *sqlx.DB) *Coordinator {
 		in:  make(chan *Build, 10),
 		out: make(chan *Build),
 	}
+	c.bootstrap()
 	go c.forward()
 	return c
 }
 
+func (c *Coordinator) bootstrap() {
+	_, err := c.db.Exec(`
+		CREATE TABLE IF NOT EXISTS builds (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			repo_full_name text,
+			commit_hash text,
+			commit_message text,
+			environment text,
+			commands text
+		);
+	`)
+	if err != nil {
+		c.err = errors.E(err, "cannot bootstrap database")
+	}
+}
+
 func (c *Coordinator) forward() {
+	if c.err != nil {
+		return
+	}
 	for j := range c.in {
 		res, err := c.db.NamedExec(`
 			INSERT INTO builds

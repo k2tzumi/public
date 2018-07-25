@@ -32,6 +32,11 @@ func main() {
 		log.Fatalln("cannot open database:", err)
 	}
 	coord := coordinator.New(db)
+	defer func() {
+		if err := coord.Error(); err != nil {
+			log.Println("coordinator error:", err)
+		}
+	}()
 	go worker.Build(buildsDir, coord)
 	recipes, err := loadRecipes()
 	if err != nil {
