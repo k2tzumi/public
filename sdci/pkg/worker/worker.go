@@ -69,6 +69,9 @@ func splitMsg(msg, split string) []string {
 			current = 0
 		}
 	}
+	if str := buf.String(); str != "" {
+		msgs = append(msgs, split+"\n"+buf.String()+"\n"+split)
+	}
 	return msgs
 }
 
