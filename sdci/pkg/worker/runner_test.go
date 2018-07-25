@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"cirello.io/exp/sdci/pkg/coordinator"
+	"cirello.io/exp/sdci/pkg/models"
 )
 
 func TestRun(t *testing.T) {
-	recipe := &coordinator.Recipe{
+	recipe := &models.Recipe{
 		Environment: "RECIPE_MSG=world",
 		Commands:    "echo Hello, $RECIPE_MSG;",
 	}
