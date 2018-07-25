@@ -55,17 +55,17 @@ func Build(buildsDir string, c *coordinator.Coordinator) {
 				continue
 			}
 
-			chunks := splitmsg(output)
-			for _, chunk := range chunks {
-				_, _, err := api.PostMessage(c.ID, "```"+chunk+"```",
-					slack.PostMessageParameters{
-						Username: "sdci",
-						Markdown: true,
-					})
-				if err != nil {
-					log.Println("cannot send slack message:", err)
-					continue
-				}
+			_, _, err = api.PostMessage(c.ID, "Build Log",
+				slack.PostMessageParameters{
+					Username: "sdci",
+					Markdown: true,
+					Attachments: []slack.Attachment{
+						{Text: output},
+					},
+				})
+			if err != nil {
+				log.Println("cannot send slack message:", err)
+				continue
 			}
 			break
 		}
