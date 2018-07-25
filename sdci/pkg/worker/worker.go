@@ -40,7 +40,7 @@ func Build(buildsDir string, c *coordinator.Coordinator) {
 			if c.Name != job.Recipe.Channel {
 				continue
 			}
-			msg := fmt.Sprintln("build for", job.RepoFullName,
+			msg := fmt.Sprintln("build", job.ID, "for", job.RepoFullName,
 				"commit:", job.CommitMessage,
 				"("+job.CommitHash+")", "done")
 			if err != nil {
