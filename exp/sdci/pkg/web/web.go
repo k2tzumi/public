@@ -1,5 +1,6 @@
 package web // import "cirello.io/exp/sdci/pkg/web"
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -29,6 +30,7 @@ func New(recipes map[string]*coordinator.Recipe,
 
 // Serve handles the HTTP requests.
 func (s *Server) Serve(l net.Listener) error {
+	srv := &http.Server{}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/github-webhook/", func(w http.ResponseWriter, r *http.Request) {
 		var payload githubHookPayload
@@ -50,12 +52,17 @@ func (s *Server) Serve(l net.Listener) error {
 			CommitMessage: payload.HeadCommit.Message,
 			Recipe:        recipe,
 		})
+		if err := s.coordinator.Error(); err != nil {
+			// TODO: should it really wait forever for shutdown?
+			srv.Shutdown(context.Background())
+		}
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		out, err := httputil.DumpRequest(r, true)
 		fmt.Println(string(out), err)
 	})
-	return errors.E(http.Serve(l, mux), "error when serving web interface")
+	srv.Handler = mux
+	return errors.E(srv.Serve(l), "error when serving web interface")
 }
 
 type githubHookPayload struct {

@@ -46,7 +46,6 @@ func main() {
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
 	}
-	// TODO: handle coordinator disruptions.
 	s := web.New(recipes, coord)
 	log.Fatalln(s.Serve(l))
 }
