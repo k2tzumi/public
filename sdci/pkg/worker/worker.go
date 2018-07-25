@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -18,15 +19,28 @@ import (
 	"cirello.io/exp/sdci/pkg/git"
 )
 
-// Build consumes coordinator jobs.
-func Build(buildsDir string, c *coordinator.Coordinator) {
-	for {
-		job := c.Next()
-		if job == nil {
-			log.Println("no more jobs in the pipe, halting worker")
-			return
-		}
-		build(buildsDir, c, job)
+// Start the builders.
+func Start(buildsDir string, c *coordinator.Coordinator, concurrency int) {
+	for i := 0; i < concurrency; i++ {
+		go func(i int) {
+			buildsDir := fmt.Sprintf(buildsDir, i)
+			if err := os.MkdirAll(buildsDir,
+				os.ModePerm&0700); err != nil {
+				log.Fatalln("cannot create .sdci build directory:", err)
+			}
+			for {
+				if err := c.Error(); err != nil {
+					log.Println("coordinator failed, stopping:", err)
+					return
+				}
+				job := c.Next()
+				if job == nil {
+					log.Println("no more jobs in the pipe, halting worker")
+					return
+				}
+				build(buildsDir, c, job)
+			}
+		}(i)
 	}
 }
 

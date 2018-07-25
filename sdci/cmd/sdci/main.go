@@ -12,7 +12,7 @@ import (
 	"cirello.io/exp/sdci/pkg/web"
 	"cirello.io/exp/sdci/pkg/worker"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3" // SQLite3 driver
+	_ "github.com/mattn/go-sqlite3"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -23,21 +23,19 @@ func main() {
 	if err != nil {
 		log.Fatalln("cannot load current user information:", err)
 	}
-	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds", "src", "github.com")
-	if err := os.MkdirAll(buildsDir, os.ModePerm&0700); err != nil {
-		log.Fatalln("cannot create .sdci:", err)
-	}
 	db, err := sqlx.Open("sqlite3", "sdci.db")
 	if err != nil {
 		log.Fatalln("cannot open database:", err)
 	}
+	// TODO: organize the relationship between coordinator, web and workers.
 	coord := coordinator.New(db)
 	defer func() {
 		if err := coord.Error(); err != nil {
 			log.Println("coordinator error:", err)
 		}
 	}()
-	go worker.Build(buildsDir, coord)
+	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v", "src", "github.com")
+	worker.Start(buildsDir, coord, 1)
 	recipes, err := loadRecipes()
 	if err != nil {
 		log.Fatal(err)
