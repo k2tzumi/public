@@ -19,7 +19,6 @@ func Checkout(cloneURL, repoDir, commit string) error {
 			return errors.E(err, "cannot clone repository")
 		}
 	}
-
 	cmd := exec.Command("git", "fetch", "--all")
 	cmd.Dir = repoDir
 	out, err := cmd.CombinedOutput()
@@ -27,7 +26,6 @@ func Checkout(cloneURL, repoDir, commit string) error {
 	if err != nil {
 		return errors.E(err, "cannot fetch objects")
 	}
-
 	cmd = exec.Command("git", "reset", "--hard", commit)
 	cmd.Dir = repoDir
 	out, err = cmd.CombinedOutput()
@@ -35,6 +33,5 @@ func Checkout(cloneURL, repoDir, commit string) error {
 	if err != nil {
 		return errors.E(err, "cannot reconfigure repository")
 	}
-
 	return nil
 }
