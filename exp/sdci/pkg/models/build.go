@@ -85,7 +85,7 @@ func (b *BuildDAO) MarkInProgress(build *Build) error {
 }
 
 // MarkComplete determines a build has completed and update its build
-// information in the database
+// information in the database.
 func (b *BuildDAO) MarkComplete(build *Build) error {
 	build.CompletedAt = time.Now()
 	build.InProgress = false

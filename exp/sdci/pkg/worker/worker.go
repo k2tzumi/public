@@ -17,6 +17,7 @@ import (
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/coordinator"
 	"cirello.io/exp/sdci/pkg/git"
+	"cirello.io/exp/sdci/pkg/models"
 )
 
 // Start the builders.
@@ -44,7 +45,7 @@ func Start(buildsDir string, c *coordinator.Coordinator, concurrency int) {
 	}
 }
 
-func build(buildsDir string, c *coordinator.Coordinator, job *coordinator.Build) {
+func build(buildsDir string, c *coordinator.Coordinator, job *models.Build) {
 	if err := c.MarkInProgress(job); err != nil {
 		log.Println("cannot mark job as in-progress:", err)
 		return

@@ -16,14 +16,12 @@ import (
 // Server implements the web-facing part of the CI service. For now, compatible
 // only with Github Webhooks.
 type Server struct {
-	recipes     map[string]*models.Recipe // map of fullName to recipes
 	coordinator *coordinator.Coordinator
 }
 
 // New creates a new web-facing server.
-func New(r map[string]*models.Recipe, c *coordinator.Coordinator) *Server {
+func New(c *coordinator.Coordinator) *Server {
 	return &Server{
-		recipes:     r,
 		coordinator: c,
 	}
 }
@@ -40,17 +38,10 @@ func (s *Server) Serve(l net.Listener) error {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		recipe, ok := s.recipes[payload.Repository.FullName]
-		if !ok {
-			log.Println("cannot find recipe for", payload.Repository.FullName)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
 		s.coordinator.Enqueue(&models.Build{
 			RepoFullName:  payload.Repository.FullName,
 			CommitHash:    payload.CommitHash,
 			CommitMessage: payload.HeadCommit.Message,
-			Recipe:        recipe,
 		})
 		if err := s.coordinator.Error(); err != nil {
 			// TODO: should it really wait forever for shutdown?

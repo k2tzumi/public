@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"cirello.io/errors"
-	"cirello.io/exp/sdci/pkg/coordinator"
+	"cirello.io/exp/sdci/pkg/models"
 )
 
 const execScript = `#!/bin/bash
@@ -20,7 +20,7 @@ set -e
 %s
 `
 
-func run(ctx context.Context, recipe *coordinator.Recipe, repoDir string) (string, error) {
+func run(ctx context.Context, recipe *models.Recipe, repoDir string) (string, error) {
 	tmpfile, err := ioutil.TempFile(repoDir, "agent")
 	if err != nil {
 		return "", errors.E(errors.FailedPrecondition, err,

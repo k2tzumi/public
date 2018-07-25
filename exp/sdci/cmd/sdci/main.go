@@ -9,6 +9,7 @@ import (
 
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/coordinator"
+	"cirello.io/exp/sdci/pkg/models"
 	"cirello.io/exp/sdci/pkg/web"
 	"cirello.io/exp/sdci/pkg/worker"
 	"github.com/jmoiron/sqlx"
@@ -28,32 +29,33 @@ func main() {
 		log.Fatalln("cannot open database:", err)
 	}
 	// TODO: organize the relationship between coordinator, web and workers.
-	coord := coordinator.New(db)
+	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v", "src", "github.com")
+	configuration, err := loadConfiguration()
+	if err != nil {
+		log.Fatal(err)
+	}
+	coord := coordinator.New(db, configuration.Recipes)
 	defer func() {
 		if err := coord.Error(); err != nil {
 			log.Println("coordinator error:", err)
 		}
 	}()
-	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v", "src", "github.com")
 	worker.Start(buildsDir, coord, 1)
-	configuration, err := loadConfiguration()
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	l, err := net.Listen("tcp", ":9090")
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
 	}
-	s := web.New(configuration.Recipes, coord)
+	s := web.New(coord)
 	log.Fatalln(s.Serve(l))
 }
 
-func loadConfiguration() (*coordinator.Configuration, error) {
+func loadConfiguration() (*models.Configuration, error) {
 	fd, err := os.Open("sdci-config.yaml")
 	if err != nil {
 		return nil, errors.E(err, "cannot open configuration file")
 	}
-	var c coordinator.Configuration
+	var c models.Configuration
 	err = yaml.NewDecoder(fd).Decode(&c)
 	return &c, errors.E(err, "cannot parse configuration")
 }
