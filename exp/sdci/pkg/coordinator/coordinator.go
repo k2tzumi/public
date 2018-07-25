@@ -6,11 +6,10 @@ import (
 
 // Recipe defines the execution steps and environment.
 type Recipe struct {
-	Clone       string `db:"clone"`
-	Slack       string `db:"slack"`
-	Channel     string `db:"channel"`
-	Environment string `db:"environment"`
-	Commands    string `db:"commands"`
+	Clone        string `db:"clone" yaml:"clone"`
+	SlackWebhook string `db:"slack_webhook" yaml:"slack_webhook"`
+	Environment  string `db:"environment" yaml:"environment"`
+	Commands     string `db:"commands" yaml:"commands"`
 }
 
 // Build defines the necessary data to run a build successfully.
