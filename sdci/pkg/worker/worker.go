@@ -26,28 +26,43 @@ func Build(buildsDir string, c *coordinator.Coordinator) {
 			log.Println("no more jobs in the pipe, halting worker")
 			return
 		}
-		log.Println("checking out code...")
-		dir, name := filepath.Split(job.RepoFullName)
-		repoDir := filepath.Join(buildsDir, dir, name)
-		if err := git.Checkout(job.Recipe.Clone, repoDir, job.CommitHash); err != nil {
-			log.Println("cannot checkout code:", err)
-			continue
+		build(buildsDir, c, job)
+	}
+}
+
+func build(buildsDir string, c *coordinator.Coordinator, job *coordinator.Build) {
+	if err := c.MarkInProgress(job); err != nil {
+		log.Println("cannot mark job as in-progress:", err)
+		return
+	}
+	defer func() {
+		if err := c.MarkComplete(job); err != nil {
+			log.Println("cannot mark job as completed:", err)
 		}
-		log.Println("building...")
-		output, err := run(context.Background(), job.Recipe, repoDir)
-		log.Println("building result:", err)
-		msg := fmt.Sprintln("build", job.ID, "for", job.RepoFullName,
-			"commit:`", job.CommitMessage, "`",
-			"("+job.CommitHash+")", "done")
-		if err != nil {
-			msg = fmt.Sprint("-  errored with:", err)
-		}
-		slackMessages := []string{msg}
-		slackMessages = append(slackMessages, splitMsg(output, "```")...)
-		for _, msg := range slackMessages {
-			if err := slackSend(job.SlackWebhook, msg); err != nil {
-				log.Println("cannot send slack message:", err)
-			}
+	}()
+	log.Println("checking out code...")
+	dir, name := filepath.Split(job.RepoFullName)
+	repoDir := filepath.Join(buildsDir, dir, name)
+	if err := git.Checkout(job.Recipe.Clone, repoDir, job.CommitHash); err != nil {
+		log.Println("cannot checkout code:", err)
+		return
+	}
+	log.Println("building...")
+	output, err := run(context.Background(), job.Recipe, repoDir)
+	job.Success = err == nil
+	job.Log = output
+	log.Println("building result:", err)
+	msg := fmt.Sprintln("build", job.ID, "for", job.RepoFullName,
+		"commit:`", job.CommitMessage, "`",
+		"("+job.CommitHash+")", "done")
+	if err != nil {
+		msg = fmt.Sprint("-  errored with:", err)
+	}
+	slackMessages := []string{msg}
+	slackMessages = append(slackMessages, splitMsg(output, "```")...)
+	for _, msg := range slackMessages {
+		if err := slackSend(job.SlackWebhook, msg); err != nil {
+			log.Println("cannot send slack message:", err)
 		}
 	}
 }
