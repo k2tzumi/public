@@ -12,7 +12,7 @@ func TestRun(t *testing.T) {
 		Environment: "RECIPE_MSG=world",
 		Commands:    "echo Hello, $RECIPE_MSG;",
 	}
-	response, err := run(context.TODO(), recipe, ".")
+	response, err := run(context.TODO(), recipe, ".", ".")
 	if err != nil {
 		t.Fatal(err)
 	}
