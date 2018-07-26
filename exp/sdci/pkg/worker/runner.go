@@ -33,10 +33,24 @@ func run(ctx context.Context, recipe *models.Recipe, repoDir, baseDir string) (s
 	cmd.Dir = repoDir
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("SDCI_BUILD_BASE_DIRECTORY=%q", baseDir))
-	cmd.Env = append(cmd.Env, strings.Split(recipe.Environment, "\n")...)
+	recipeEnvVars := strings.Split(recipe.Environment, "\n")
+	for _, v := range recipeEnvVars {
+		cmd.Env = append(cmd.Env, os.Expand(v, expandVar(cmd.Env)))
+	}
 	var buf crbuffer
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 	err = cmd.Run()
 	return buf.String(), errors.E(err, "failed when running builder")
+}
+
+func expandVar(currentEnv []string) func(string) string {
+	return func(s string) string {
+		for _, e := range currentEnv {
+			if strings.HasPrefix(e, s+"=") {
+				return strings.TrimPrefix(e, s+"=")
+			}
+		}
+		return ""
+	}
 }
