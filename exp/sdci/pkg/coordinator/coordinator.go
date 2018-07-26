@@ -77,7 +77,7 @@ func (c *Coordinator) Enqueue(b *models.Build) {
 		c.setError(errors.Errorf("cannot find recipe for", b.RepoFullName))
 		return
 	}
-	b.Recipe = recipe
+	b.Recipe = &recipe
 	c.in <- b
 }
 

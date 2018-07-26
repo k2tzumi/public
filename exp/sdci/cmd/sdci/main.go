@@ -7,14 +7,12 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/coordinator"
 	"cirello.io/exp/sdci/pkg/models"
 	"cirello.io/exp/sdci/pkg/web"
 	"cirello.io/exp/sdci/pkg/worker"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -31,7 +29,11 @@ func main() {
 	// TODO: organize the relationship between coordinator, web and workers.
 	// TODO: work out webserver and worker stop when coordinator fails.
 	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v", "src", "github.com")
-	configuration, err := loadConfiguration()
+	fd, err := os.Open("sdci-config.yaml")
+	if err != nil {
+		log.Fatal("cannot open configuration file:", err)
+	}
+	configuration, err := models.LoadConfiguration(fd)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,14 +53,4 @@ func main() {
 	}
 	s := web.New(coord)
 	log.Fatalln(s.Serve(l))
-}
-
-func loadConfiguration() (models.Configuration, error) {
-	fd, err := os.Open("sdci-config.yaml")
-	if err != nil {
-		return nil, errors.E(err, "cannot open configuration file")
-	}
-	var c models.Configuration
-	err = yaml.NewDecoder(fd).Decode(&c)
-	return c, errors.E(err, "cannot parse configuration")
 }
