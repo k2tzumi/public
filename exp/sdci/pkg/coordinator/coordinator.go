@@ -102,10 +102,13 @@ func (c *Coordinator) MarkComplete(build *models.Build) error {
 	return err
 }
 
-// GetLastBuild loads last known build for a repository.
-func (c *Coordinator) GetLastBuild(repoFullName string) (*models.Build, error) {
+// GetLastBuildStatus loads last known build status for a repository.
+func (c *Coordinator) GetLastBuildStatus(repoFullName string) models.Status {
 	build, err := c.buildDAO.GetLastBuild(repoFullName)
 	err = errors.E(err, "cannot load last build for repository")
 	c.setError(err)
-	return build, err
+	if err != nil {
+		return models.Unknown
+	}
+	return build.Status()
 }
