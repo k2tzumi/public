@@ -29,12 +29,16 @@ func main() {
 		log.Fatalln("cannot open database:", err)
 	}
 	// TODO: organize the relationship between coordinator, web and workers.
+	// TODO: work out webserver and worker stop when coordinator fails.
 	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v", "src", "github.com")
 	configuration, err := loadConfiguration()
 	if err != nil {
 		log.Fatal(err)
 	}
 	coord := coordinator.New(db, configuration)
+	if err := coord.Error(); err != nil {
+		log.Println("coordinator error on start:", err)
+	}
 	defer func() {
 		if err := coord.Error(); err != nil {
 			log.Println("coordinator error:", err)
