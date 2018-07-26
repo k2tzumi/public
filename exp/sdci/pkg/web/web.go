@@ -1,6 +1,7 @@
 package web // import "cirello.io/exp/sdci/pkg/web"
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -35,7 +36,8 @@ func (s *Server) Serve(l net.Listener) error {
 		err := json.NewDecoder(r.Body).Decode(&payload)
 		if err != nil {
 			log.Println("cannot decode payload:", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError),
+				http.StatusInternalServerError)
 			return
 		}
 		s.coordinator.Enqueue(&models.Build{
@@ -47,6 +49,26 @@ func (s *Server) Serve(l net.Listener) error {
 			// TODO: should it really wait forever for shutdown?
 			srv.Shutdown(context.Background())
 		}
+	})
+	mux.HandleFunc("/badge/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/svg+xml;charset=utf-8")
+		build, err := s.coordinator.GetLastBuild("ucirello/public")
+		if err != nil && errors.RootCause(err) != sql.ErrNoRows {
+			log.Println("cannot load last build for repository:", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError),
+				http.StatusInternalServerError)
+			return
+		}
+		badge := badgeUnknown
+		switch build.Status() {
+		case models.Success:
+			badge = badgePassing
+		case models.Failed:
+			badge = badgeFailing
+		case models.InProgress:
+			badge = badgeRunning
+		}
+		fmt.Fprint(w, badge)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		out, err := httputil.DumpRequest(r, true)
@@ -69,3 +91,51 @@ type githubHookPayload struct {
 		AvatarURL string `json:"avatar_url"`
 	}
 }
+
+const badgePassing = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="88" height="20">
+<linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+<clipPath id="a"><rect width="88" height="20" rx="3" fill="#fff"/></clipPath>
+<g clip-path="url(#a)"><path fill="#555" d="M0 0h37v20H0z"/><path fill="#4c1" d="M37 0h51v20H37z"/><path fill="url(#b)" d="M0 0h88v20H0z"/></g>
+<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+<text x="195" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="270">build</text>
+<text x="195" y="140" transform="scale(.1)" textLength="270">build</text>
+<text x="615" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="410">passing</text>
+<text x="615" y="140" transform="scale(.1)" textLength="410">passing</text>
+</g>
+</svg>`
+
+const badgeFailing = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="80" height="20">
+<linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+<clipPath id="a"><rect width="80" height="20" rx="3" fill="#fff"/></clipPath>
+<g clip-path="url(#a)"><path fill="#555" d="M0 0h37v20H0z"/><path fill="#e05d44" d="M37 0h43v20H37z"/><path fill="url(#b)" d="M0 0h80v20H0z"/></g>
+<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+<text x="195" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="270">build</text>
+<text x="195" y="140" transform="scale(.1)" textLength="270">build</text>
+<text x="575" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="330">failing</text>
+<text x="575" y="140" transform="scale(.1)" textLength="330">failing</text>
+</g>
+</svg>`
+
+const badgeRunning = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="90" height="20">
+<linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+<clipPath id="a"><rect width="90" height="20" rx="3" fill="#fff"/></clipPath>
+<g clip-path="url(#a)"><path fill="#555" d="M0 0h37v20H0z"/><path fill="#9f9f9f" d="M37 0h53v20H37z"/><path fill="url(#b)" d="M0 0h90v20H0z"/></g>
+<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+<text x="195" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="270">build</text>
+<text x="195" y="140" transform="scale(.1)" textLength="270">build</text>
+<text x="625" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">running</text>
+<text x="625" y="140" transform="scale(.1)" textLength="430">running</text>
+</g>
+</svg>`
+
+const badgeUnknown = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="90" height="20">
+<linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+<clipPath id="a"><rect width="90" height="20" rx="3" fill="#fff"/></clipPath>
+<g clip-path="url(#a)"><path fill="#555" d="M0 0h37v20H0z"/><path fill="#9f9f9f" d="M37 0h53v20H37z"/><path fill="url(#b)" d="M0 0h90v20H0z"/></g>
+<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+<text x="195" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="270">build</text>
+<text x="195" y="140" transform="scale(.1)" textLength="270">build</text>
+<text x="625" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">unknown</text>
+<text x="625" y="140" transform="scale(.1)" textLength="430">unknown</text>
+</g>
+</svg>`
