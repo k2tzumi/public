@@ -1,7 +1,6 @@
 package worker // import "cirello.io/exp/sdci/pkg/worker"
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -34,7 +33,7 @@ func run(ctx context.Context, recipe *models.Recipe, repoDir string) (string, er
 	cmd.Dir = repoDir
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, strings.Split(recipe.Environment, "\n")...)
-	var buf bytes.Buffer
+	var buf crbuffer
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 	err = cmd.Run()
