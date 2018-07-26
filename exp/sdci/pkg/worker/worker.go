@@ -56,26 +56,26 @@ func worker(buildsDir, repoFullName string, c *coordinator.Coordinator, i int) {
 
 func build(buildsDir string, c *coordinator.Coordinator, job *models.Build) {
 	if err := c.MarkInProgress(job); err != nil {
-		log.Println("cannot mark job as in-progress:", err)
+		log.Println(job.RepoFullName, "cannot mark job as in-progress:", err)
 		return
 	}
 	defer func() {
 		if err := c.MarkComplete(job); err != nil {
-			log.Println("cannot mark job as completed:", err)
+			log.Println(job.RepoFullName, "cannot mark job as completed:", err)
 		}
 	}()
-	log.Println("checking out code...")
+	log.Println(job.RepoFullName, "checking out code...")
 	dir, name := filepath.Split(job.RepoFullName)
 	repoDir := filepath.Join(buildsDir, dir, name)
 	if err := git.Checkout(job.Recipe.Clone, repoDir, job.CommitHash); err != nil {
-		log.Println("cannot checkout code:", err)
+		log.Println(job.RepoFullName, "cannot checkout code:", err)
 		return
 	}
-	log.Println("building...")
+	log.Println(job.RepoFullName, "building...")
 	output, err := run(context.Background(), job.Recipe, repoDir)
 	job.Success = err == nil
 	job.Log = output
-	log.Println("building result:", err)
+	log.Println(job.RepoFullName, "building result:", err)
 	msg := fmt.Sprintln("build", job.ID, "for", job.RepoFullName,
 		"commit:`", job.CommitMessage, "`",
 		"("+job.CommitHash+")", "done")
@@ -86,7 +86,7 @@ func build(buildsDir string, c *coordinator.Coordinator, job *models.Build) {
 	slackMessages = append(slackMessages, splitMsg(output, "```")...)
 	for _, msg := range slackMessages {
 		if err := slackSend(job.SlackWebhook, msg); err != nil {
-			log.Println("cannot send slack message:", err)
+			log.Println(job.RepoFullName, "cannot send slack message:", err)
 		}
 	}
 }
