@@ -9,23 +9,21 @@ import (
 
 // Coordinator takes and dispatches build requests.
 type Coordinator struct {
-	recipes  map[string]*models.Recipe
-	in       chan *models.Build
-	out      chan *models.Build
-	buildDAO *models.BuildDAO
+	configuration models.Configuration
+	buildDAO      *models.BuildDAO
+	in            chan *models.Build
+	out           mappedChans
 
-	mu  sync.Mutex
-	err error
+	errMu sync.Mutex
+	err   error
 }
 
 // New creates a new coordinator
-func New(db *sqlx.DB, recipes map[string]*models.Recipe) *Coordinator {
+func New(db *sqlx.DB, configuration models.Configuration) *Coordinator {
 	c := &Coordinator{
-		recipes:  recipes,
-		buildDAO: models.NewBuildDAO(db),
-		// TODO: replace with proper queues
-		in:  make(chan *models.Build, 10),
-		out: make(chan *models.Build),
+		configuration: configuration,
+		buildDAO:      models.NewBuildDAO(db),
+		in:            make(chan *models.Build, 10),
 	}
 	c.bootstrap()
 	go c.forward()
@@ -36,9 +34,9 @@ func (c *Coordinator) setError(err error) {
 	if err == nil {
 		return
 	}
-	c.mu.Lock()
+	c.errMu.Lock()
 	c.err = err
-	c.mu.Unlock()
+	c.errMu.Unlock()
 }
 
 func (c *Coordinator) bootstrap() {
@@ -57,20 +55,20 @@ func (c *Coordinator) forward() {
 			c.setError(errors.E(err, "cannot register build"))
 			return
 		}
-		c.out <- build
+		c.out.ch(build.RepoFullName) <- build
 	}
 }
 
 // Error returns the last found error.
 func (c *Coordinator) Error() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.errMu.Lock()
+	defer c.errMu.Unlock()
 	return c.err
 }
 
 // Enqueue puts a build into the building pipeline.
 func (c *Coordinator) Enqueue(b *models.Build) {
-	recipe, ok := c.recipes[b.RepoFullName]
+	recipe, ok := c.configuration[b.RepoFullName]
 	if !ok {
 		c.setError(errors.Errorf("cannot find recipe for", b.RepoFullName))
 		return
@@ -80,8 +78,8 @@ func (c *Coordinator) Enqueue(b *models.Build) {
 }
 
 // Next returns the next job in the pipe. If nil, the client must stop reading.
-func (c *Coordinator) Next() *models.Build {
-	return <-c.out
+func (c *Coordinator) Next(repoFullName string) *models.Build {
+	return <-c.out.ch(repoFullName)
 }
 
 // MarkInProgress determines a build has started and update its build

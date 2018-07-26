@@ -34,14 +34,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coord := coordinator.New(db, configuration.Recipes)
+	coord := coordinator.New(db, configuration)
 	defer func() {
 		if err := coord.Error(); err != nil {
 			log.Println("coordinator error:", err)
 		}
 	}()
-	worker.Start(buildsDir, coord, 1)
-
+	worker.Start(buildsDir, coord, configuration)
 	l, err := net.Listen("tcp", ":9090")
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
@@ -50,12 +49,12 @@ func main() {
 	log.Fatalln(s.Serve(l))
 }
 
-func loadConfiguration() (*models.Configuration, error) {
+func loadConfiguration() (models.Configuration, error) {
 	fd, err := os.Open("sdci-config.yaml")
 	if err != nil {
 		return nil, errors.E(err, "cannot open configuration file")
 	}
 	var c models.Configuration
 	err = yaml.NewDecoder(fd).Decode(&c)
-	return &c, errors.E(err, "cannot parse configuration")
+	return c, errors.E(err, "cannot parse configuration")
 }
