@@ -28,7 +28,7 @@ func main() {
 	}
 	// TODO: organize the relationship between coordinator, web and workers.
 	// TODO: work out webserver and worker stop when coordinator fails.
-	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v", "src", "github.com")
+	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v")
 	fd, err := os.Open("sdci-config.yaml")
 	if err != nil {
 		log.Fatal("cannot open configuration file:", err)

@@ -66,13 +66,14 @@ func build(buildsDir string, c *coordinator.Coordinator, job *models.Build) {
 	}()
 	log.Println(job.RepoFullName, "checking out code...")
 	dir, name := filepath.Split(job.RepoFullName)
-	repoDir := filepath.Join(buildsDir, dir, name)
+	baseDir := filepath.Join(buildsDir, job.RepoFullName)
+	repoDir := filepath.Join(baseDir, "src", "github.com", dir, name)
 	if err := git.Checkout(job.Recipe.Clone, repoDir, job.CommitHash); err != nil {
 		log.Println(job.RepoFullName, "cannot checkout code:", err)
 		return
 	}
 	log.Println(job.RepoFullName, "building...")
-	output, err := run(context.Background(), job.Recipe, repoDir)
+	output, err := run(context.Background(), job.Recipe, repoDir, baseDir)
 	job.Success = err == nil
 	job.Log = output
 	log.Println(job.RepoFullName, "building result:", err)
