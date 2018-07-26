@@ -21,27 +21,34 @@ import (
 )
 
 // Start the builders.
-func Start(buildsDir string, c *coordinator.Coordinator, concurrency int) {
-	for i := 0; i < concurrency; i++ {
-		go func(i int) {
-			buildsDir := fmt.Sprintf(buildsDir, i)
-			if err := os.MkdirAll(buildsDir,
-				os.ModePerm&0700); err != nil {
-				log.Fatalln("cannot create .sdci build directory:", err)
-			}
-			for {
-				if err := c.Error(); err != nil {
-					log.Println("coordinator failed, stopping:", err)
-					return
+func Start(buildsDir string, c *coordinator.Coordinator, configuration models.Configuration) {
+	for repoFullName, recipe := range configuration {
+		total := recipe.Concurrency
+		if total == 0 {
+			total = 1
+		}
+		for i := 0; i < total; i++ {
+			go func(repoFullName string, i int) {
+				log.Println("starting worker for", repoFullName, i)
+				buildsDir := fmt.Sprintf(buildsDir, i)
+				if err := os.MkdirAll(buildsDir,
+					os.ModePerm&0700); err != nil {
+					log.Fatalln("cannot create .sdci build directory:", err)
 				}
-				job := c.Next()
-				if job == nil {
-					log.Println("no more jobs in the pipe, halting worker")
-					return
+				for {
+					if err := c.Error(); err != nil {
+						log.Println("coordinator failed, stopping:", err)
+						return
+					}
+					job := c.Next(repoFullName)
+					if job == nil {
+						log.Println("no more jobs in the pipe, halting worker")
+						return
+					}
+					build(buildsDir, c, job)
 				}
-				build(buildsDir, c, job)
-			}
-		}(i)
+			}(repoFullName, i)
+		}
 	}
 }
 
