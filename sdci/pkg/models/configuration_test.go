@@ -17,6 +17,7 @@ func TestConfigurationParser(t *testing.T) {
 			Concurrency:  2,
 			Clone:        "git@github.com:org/account.git",
 			SlackWebhook: "https://hooks.slack.com/services/AAAA/BBB/CCC",
+			GithubSecret: "ghsecret",
 			Environment:  "ENV1=1\nENV2=2\n",
 			Commands:     "vgo test ./errors/... ./supervisor/...\necho OK\n",
 		},
@@ -32,6 +33,7 @@ org/account:
   concurrency: 2
   clone: git@github.com:org/account.git
   slack_webhook: https://hooks.slack.com/services/AAAA/BBB/CCC
+  github_secret: ghsecret
   environment: |
     ENV1=1
     ENV2=2

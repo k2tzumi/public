@@ -1,6 +1,10 @@
 package coordinator // import "cirello.io/exp/sdci/pkg/coordinator"
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/hex"
 	"log"
+	"strings"
 	"sync"
 
 	"cirello.io/errors"
@@ -71,14 +75,32 @@ func (c *Coordinator) Error() error {
 }
 
 // Enqueue puts a build into the building pipeline.
-func (c *Coordinator) Enqueue(b *models.Build) {
+func (c *Coordinator) Enqueue(b *models.Build, sig string, body []byte) error {
 	recipe, ok := c.configuration[b.RepoFullName]
 	if !ok {
-		c.setError(errors.Errorf("cannot find recipe for", b.RepoFullName))
-		return
+		return errors.Errorf("cannot find recipe for", b.RepoFullName)
+	}
+	if recipe.GithubSecret != "" &&
+		!isValidSecret(sig, []byte(recipe.GithubSecret), body) {
+		return errors.E("invalid signature")
 	}
 	b.Recipe = &recipe
 	c.in <- b
+	return nil
+}
+
+func isValidSecret(sig string, secret, body []byte) bool {
+	const signaturePrefix = "sha1="
+	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
+	if len(sig) != signatureLength || !strings.HasPrefix(sig, signaturePrefix) {
+		return false
+	}
+	actual := make([]byte, 20)
+	hex.Decode(actual, []byte(strings.TrimPrefix(sig, signaturePrefix)))
+	computed := hmac.New(sha1.New, secret)
+	computed.Write(body)
+	signedBody := []byte(computed.Sum(nil))
+	return hmac.Equal(signedBody, actual)
 }
 
 // Next returns the next job in the pipe. If nil, the client must stop reading.
