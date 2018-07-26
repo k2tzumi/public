@@ -1,5 +1,6 @@
 package coordinator // import "cirello.io/exp/sdci/pkg/coordinator"
 import (
+	"log"
 	"sync"
 
 	"cirello.io/errors"
@@ -35,6 +36,9 @@ func (c *Coordinator) setError(err error) {
 		return
 	}
 	c.errMu.Lock()
+	// TODO: remove this log line when the relationship between coordinator
+	// and its peers is solved.
+	log.Println("coordinator err trapped:", err)
 	c.err = err
 	c.errMu.Unlock()
 }
