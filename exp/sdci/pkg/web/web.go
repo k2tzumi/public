@@ -3,6 +3,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -32,22 +33,34 @@ func (s *Server) Serve(l net.Listener) error {
 	srv := &http.Server{}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/github-webhook/", func(w http.ResponseWriter, r *http.Request) {
-		var payload githubHookPayload
-		err := json.NewDecoder(r.Body).Decode(&payload)
+		if err := s.coordinator.Error(); err != nil {
+			// TODO: should it really wait forever for shutdown?
+			srv.Shutdown(context.Background())
+		}
+		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Println("cannot decode payload:", err)
+			log.Println("cannot read payload body:", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
 				http.StatusInternalServerError)
 			return
 		}
-		s.coordinator.Enqueue(&models.Build{
+		var payload githubHookPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			log.Println("cannot parse payload:", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError),
+				http.StatusInternalServerError)
+			return
+		}
+		sig := r.Header.Get("X-Hub-Signature")
+		if err := s.coordinator.Enqueue(&models.Build{
 			RepoFullName:  payload.Repository.FullName,
 			CommitHash:    payload.CommitHash,
 			CommitMessage: payload.HeadCommit.Message,
-		})
-		if err := s.coordinator.Error(); err != nil {
-			// TODO: should it really wait forever for shutdown?
-			srv.Shutdown(context.Background())
+		}, sig, body); err != nil {
+			log.Println("cannot enqueue payload:", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError),
+				http.StatusInternalServerError)
+			return
 		}
 	})
 	mux.HandleFunc("/badge/", func(w http.ResponseWriter, r *http.Request) {

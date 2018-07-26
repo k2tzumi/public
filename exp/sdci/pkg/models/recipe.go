@@ -5,6 +5,7 @@ type Recipe struct {
 	Concurrency  int    `db:"-" yaml:"concurrency"`
 	Clone        string `db:"-" yaml:"clone"`
 	SlackWebhook string `db:"-" yaml:"slack_webhook"`
+	GithubSecret string `db:"-" yaml:"github_secret"`
 	Environment  string `db:"environment" yaml:"environment"`
 	Commands     string `db:"commands" yaml:"commands"`
 }
