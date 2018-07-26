@@ -19,7 +19,7 @@ set -e
 %s
 `
 
-func run(ctx context.Context, recipe *models.Recipe, repoDir string) (string, error) {
+func run(ctx context.Context, recipe *models.Recipe, repoDir, baseDir string) (string, error) {
 	tmpfile, err := ioutil.TempFile(repoDir, "agent")
 	if err != nil {
 		return "", errors.E(errors.FailedPrecondition, err,
@@ -32,6 +32,7 @@ func run(ctx context.Context, recipe *models.Recipe, repoDir string) (string, er
 	cmd := exec.CommandContext(ctx, "/bin/sh", tmpfile.Name())
 	cmd.Dir = repoDir
 	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, fmt.Sprintf("SDCI_BUILD_BASE_DIRECTORY=%q", baseDir))
 	cmd.Env = append(cmd.Env, strings.Split(recipe.Environment, "\n")...)
 	var buf crbuffer
 	cmd.Stdout = &buf
