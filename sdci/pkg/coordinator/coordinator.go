@@ -2,6 +2,7 @@ package coordinator // import "cirello.io/exp/sdci/pkg/coordinator"
 import (
 	"crypto/hmac"
 	"crypto/sha1"
+	"database/sql"
 	"encoding/hex"
 	"log"
 	"strings"
@@ -128,7 +129,9 @@ func (c *Coordinator) MarkComplete(build *models.Build) error {
 func (c *Coordinator) GetLastBuildStatus(repoFullName string) models.Status {
 	build, err := c.buildDAO.GetLastBuild(repoFullName)
 	err = errors.E(err, "cannot load last build for repository")
-	c.setError(err)
+	if err != nil && errors.RootCause(err) != sql.ErrNoRows {
+		c.setError(err)
+	}
 	if err != nil {
 		return models.Unknown
 	}
