@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/coordinator"
@@ -52,7 +53,8 @@ func (s *Server) Serve(l net.Listener) error {
 	})
 	mux.HandleFunc("/badge/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/svg+xml;charset=utf-8")
-		build, err := s.coordinator.GetLastBuild("ucirello/public")
+		repoFullName := strings.TrimPrefix(r.RequestURI, "/badge/")
+		build, err := s.coordinator.GetLastBuild(repoFullName)
 		if err != nil && errors.RootCause(err) != sql.ErrNoRows {
 			log.Println("cannot load last build for repository:", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
