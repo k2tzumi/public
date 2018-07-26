@@ -47,7 +47,7 @@ func main() {
 		}
 	}()
 	worker.Start(buildsDir, coord, configuration)
-	l, err := net.Listen("tcp", ":9090")
+	l, err := net.Listen("tcp", ":6500")
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
 	}
