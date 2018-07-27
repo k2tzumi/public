@@ -9,14 +9,14 @@ import (
 
 // Build defines the necessary data to run a build successfully.
 type Build struct {
-	ID            int64     `db:"id"`
-	RepoFullName  string    `db:"repo_full_name"`
-	CommitHash    string    `db:"commit_hash"`
-	CommitMessage string    `db:"commit_message"`
-	StartedAt     time.Time `db:"started_at"`
-	Success       bool      `db:"success"`
-	Log           string    `db:"log"`
-	CompletedAt   time.Time `db:"completed_at"`
+	ID            int64     `db:"id" json:"id,omitempty"`
+	RepoFullName  string    `db:"repo_full_name" json:"repo_full_name,omitempty"`
+	CommitHash    string    `db:"commit_hash" json:"commit_hash,omitempty"`
+	CommitMessage string    `db:"commit_message" json:"commit_message,omitempty"`
+	StartedAt     time.Time `db:"started_at" json:"started_at,omitempty"`
+	Success       bool      `db:"success" json:"success,omitempty"`
+	Log           string    `db:"log" json:"log,omitempty"`
+	CompletedAt   time.Time `db:"completed_at" json:"completed_at,omitempty"`
 	*Recipe
 }
 
@@ -151,4 +151,26 @@ func (b *BuildDAO) GetLastBuild(repoFullName string) (*Build, error) {
 		LIMIT 1
 	`, repoFullName)
 	return &build, errors.E(err, "cannot load last known build")
+}
+
+// ListByRepoFullName all builds for a repository
+func (b *BuildDAO) ListByRepoFullName(repoFullName string) ([]*Build, error) {
+	var builds []*Build
+	err := b.db.Select(&builds, `
+		SELECT
+			id,
+			repo_full_name,
+			commit_hash,
+			commit_message,
+			environment,
+			commands,
+			started_at,
+			success,
+			log,
+			completed_at
+		FROM builds
+		WHERE repo_full_name = :repoFullName
+		ORDER BY started_at DESC
+	`, repoFullName)
+	return builds, errors.E(err, "cannot load builds for repository")
 }

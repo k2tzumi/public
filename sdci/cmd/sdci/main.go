@@ -9,7 +9,8 @@ import (
 
 	"cirello.io/exp/sdci/pkg/coordinator"
 	"cirello.io/exp/sdci/pkg/models"
-	"cirello.io/exp/sdci/pkg/web"
+	"cirello.io/exp/sdci/pkg/ui/dashboard"
+	"cirello.io/exp/sdci/pkg/ui/webhooks"
 	"cirello.io/exp/sdci/pkg/worker"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,8 +27,6 @@ func main() {
 	if err != nil {
 		log.Fatalln("cannot open database:", err)
 	}
-	// TODO: organize the relationship between coordinator, web and workers.
-	// TODO: work out webserver and worker stop when coordinator fails.
 	buildsDir := filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v")
 	fd, err := os.Open("sdci-config.yaml")
 	if err != nil {
@@ -47,10 +46,19 @@ func main() {
 		}
 	}()
 	worker.Start(buildsDir, coord, configuration)
-	l, err := net.Listen("tcp", ":6500")
+	webhookListener, err := net.Listen("tcp", ":6500")
 	if err != nil {
 		log.Fatalln("cannot start web server:", err)
 	}
-	s := web.New(coord)
-	log.Fatalln(s.Serve(l))
+	webhookServer := webhooks.New(coord)
+	go func() {
+		log.Fatalln(webhookServer.Serve(webhookListener))
+	}()
+
+	dashboardListener, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		log.Fatalln("cannot start dashboard server:", err)
+	}
+	dashboardServer := dashboard.New(models.NewBuildDAO(db))
+	log.Fatalln(dashboardServer.Serve(dashboardListener))
 }
