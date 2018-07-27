@@ -23,7 +23,7 @@ import (
 // Start the builders.
 func Start(ctx context.Context, buildsDir string, c *coordinator.Coordinator, configuration models.Configuration) error {
 	for repoFullName, recipe := range configuration {
-		total := recipe.Concurrency
+		total := int(recipe.Concurrency)
 		if total == 0 {
 			total = 1
 		}

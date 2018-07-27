@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"cirello.io/errors"
+	"cirello.io/exp/sdci/pkg/coordinator/api"
 	"cirello.io/exp/sdci/pkg/models"
 	"github.com/jmoiron/sqlx"
 )
@@ -86,7 +87,15 @@ func (c *Coordinator) Error() error {
 }
 
 // Enqueue puts a build into the building pipeline.
-func (c *Coordinator) Enqueue(b *models.Build, sig string, body []byte) error {
+func (c *Coordinator) Enqueue(repoFullName, commitHash, commitMessage,
+	sig string, body []byte) error {
+	b := &models.Build{
+		Build: &api.Build{
+			RepoFullName:  repoFullName,
+			CommitHash:    commitHash,
+			CommitMessage: commitMessage,
+		},
+	}
 	recipe, ok := c.configuration[b.RepoFullName]
 	if !ok {
 		return errors.Errorf("cannot find recipe for", b.RepoFullName)

@@ -10,6 +10,7 @@ require (
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-ini/ini v1.37.0
+	github.com/gogo/protobuf v1.1.1
 	github.com/golang/protobuf v1.1.0
 	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/websocket v1.2.0
