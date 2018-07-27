@@ -1,4 +1,4 @@
-package web // import "cirello.io/exp/sdci/pkg/web"
+package webhooks // import "cirello.io/exp/sdci/pkg/ui/webhooks"
 import (
 	"context"
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 	"cirello.io/exp/sdci/pkg/models"
 )
 
-// Server implements the web-facing part of the CI service. For now, compatible
+// Server implements the webhooks part of the CI service. For now, compatible
 // only with Github Webhooks.
 type Server struct {
 	coordinator *coordinator.Coordinator
