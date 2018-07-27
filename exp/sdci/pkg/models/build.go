@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"cirello.io/errors"
-	"cirello.io/exp/sdci/pkg/coordinator/api"
+	"cirello.io/exp/sdci/pkg/grpc/api"
 	"github.com/jmoiron/sqlx"
 )
 

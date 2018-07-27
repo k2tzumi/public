@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"cirello.io/errors"
-	"cirello.io/exp/sdci/pkg/coordinator/api"
+	"cirello.io/exp/sdci/pkg/grpc/api"
 	"cirello.io/exp/sdci/pkg/models"
 	"github.com/jmoiron/sqlx"
 )
@@ -126,6 +126,13 @@ func isValidSecret(sig string, secret, body []byte) bool {
 // Next returns the next job in the pipe. If nil, the client must stop reading.
 func (c *Coordinator) Next(repoFullName string) <-chan *models.Build {
 	return c.out.ch(repoFullName)
+}
+
+// Recover re-enqueues the build request upon failure
+func (c *Coordinator) Recover(repoFullName string, build *models.Build) {
+	// TODO: put the build at the head, not the tail of the queue.
+	// Obviously, do it when replacing channels with proper queues.
+	c.out.ch(repoFullName) <- build
 }
 
 // MarkInProgress determines a build has started and update its build

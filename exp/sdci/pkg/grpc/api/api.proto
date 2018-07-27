@@ -6,12 +6,26 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
 service Runner {
-    rpc Run(stream Job) returns (stream Job) {}
+    rpc Run(stream JobRequest) returns (stream JobResponse) {}
 }
 
-message Job {
+message JobResponse {
 	Recipe recipe = 1;
 	Build build = 2;
+}
+
+message JobRequest {
+	oneof command {
+		BuildRequest build = 1;
+		KeepAlive keepAlive = 2;
+	}
+}
+
+message BuildRequest {
+	string repoFullName  = 1;
+}
+
+message KeepAlive {
 }
 
 message Recipe {

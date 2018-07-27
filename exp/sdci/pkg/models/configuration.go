@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"cirello.io/errors"
-	"cirello.io/exp/sdci/pkg/coordinator/api"
+	"cirello.io/exp/sdci/pkg/grpc/api"
 	yaml "gopkg.in/yaml.v2"
 )
 
