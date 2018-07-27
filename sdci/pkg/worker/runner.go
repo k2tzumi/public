@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"cirello.io/errors"
-	"cirello.io/exp/sdci/pkg/coordinator/api"
+	"cirello.io/exp/sdci/pkg/grpc/api"
 )
 
 const execScript = `#!/bin/bash
