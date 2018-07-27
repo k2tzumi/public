@@ -21,40 +21,41 @@ import (
 )
 
 // Start the builders.
-func Start(buildsDir string, c *coordinator.Coordinator, configuration models.Configuration) {
+func Start(ctx context.Context, buildsDir string, c *coordinator.Coordinator, configuration models.Configuration) error {
 	for repoFullName, recipe := range configuration {
 		total := recipe.Concurrency
 		if total == 0 {
 			total = 1
 		}
 		for i := 0; i < total; i++ {
-			go worker(buildsDir, repoFullName, c, i)
+			log.Println("starting worker for", repoFullName, i)
+			buildsDir := fmt.Sprintf(buildsDir, i)
+			if err := os.MkdirAll(buildsDir,
+				os.ModePerm&0700); err != nil {
+				return errors.E(err, "cannot create .sdci build directory")
+			}
+			go worker(ctx, buildsDir, repoFullName, c, i)
 		}
 	}
+	return nil
 }
 
-func worker(buildsDir, repoFullName string, c *coordinator.Coordinator, i int) {
-	log.Println("starting worker for", repoFullName, i)
-	buildsDir = fmt.Sprintf(buildsDir, i)
-	if err := os.MkdirAll(buildsDir,
-		os.ModePerm&0700); err != nil {
-		log.Fatalln("cannot create .sdci build directory:", err)
-	}
+func worker(ctx context.Context, buildsDir, repoFullName string, c *coordinator.Coordinator, i int) {
 	for {
-		if err := c.Error(); err != nil {
-			log.Println("coordinator failed, stopping:", err)
+		select {
+		case <-ctx.Done():
 			return
+		case job := <-c.Next(repoFullName):
+			if job == nil {
+				log.Println("no more jobs in the pipe, halting worker")
+				return
+			}
+			build(ctx, buildsDir, c, job)
 		}
-		job := c.Next(repoFullName)
-		if job == nil {
-			log.Println("no more jobs in the pipe, halting worker")
-			return
-		}
-		build(buildsDir, c, job)
 	}
 }
 
-func build(buildsDir string, c *coordinator.Coordinator, job *models.Build) {
+func build(ctx context.Context, buildsDir string, c *coordinator.Coordinator, job *models.Build) {
 	if err := c.MarkInProgress(job); err != nil {
 		log.Println(job.RepoFullName, "cannot mark job as in-progress:", err)
 		return
@@ -68,7 +69,7 @@ func build(buildsDir string, c *coordinator.Coordinator, job *models.Build) {
 	dir, name := filepath.Split(job.RepoFullName)
 	baseDir := filepath.Join(buildsDir, job.RepoFullName)
 	repoDir := filepath.Join(baseDir, "src", "github.com", dir, name)
-	if err := git.Checkout(job.Recipe.Clone, repoDir, job.CommitHash); err != nil {
+	if err := git.Checkout(ctx, job.Recipe.Clone, repoDir, job.CommitHash); err != nil {
 		log.Println(job.RepoFullName, "cannot checkout code:", err)
 		return
 	}

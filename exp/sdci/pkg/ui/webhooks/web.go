@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"time"
 
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/coordinator"
@@ -28,15 +29,11 @@ func New(c *coordinator.Coordinator) *Server {
 	}
 }
 
-// Serve handles the HTTP requests.
-func (s *Server) Serve(l net.Listener) error {
+// ServeContext handles the HTTP requests.
+func (s *Server) ServeContext(ctx context.Context, l net.Listener) error {
 	srv := &http.Server{}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/github-webhook/", func(w http.ResponseWriter, r *http.Request) {
-		if err := s.coordinator.Error(); err != nil {
-			// TODO: should it really wait forever for shutdown?
-			srv.Shutdown(context.Background())
-		}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Println("cannot read payload body:", err)
@@ -83,6 +80,14 @@ func (s *Server) Serve(l net.Listener) error {
 		fmt.Println(string(out), err)
 	})
 	srv.Handler = mux
+	go func() {
+		select {
+		case <-ctx.Done():
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			srv.Shutdown(ctx)
+		}
+	}()
 	return errors.E(srv.Serve(l), "error when serving web interface")
 }
 
