@@ -1,10 +1,10 @@
 package coordinator // import "cirello.io/exp/sdci/pkg/coordinator"
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"database/sql"
 	"encoding/hex"
-	"log"
 	"strings"
 	"sync"
 
@@ -19,21 +19,26 @@ type Coordinator struct {
 	buildDAO      *models.BuildDAO
 	in            chan *models.Build
 	out           mappedChans
+	ctx           context.Context
+	cancel        context.CancelFunc
 
 	errMu sync.Mutex
 	err   error
 }
 
 // New creates a new coordinator
-func New(db *sqlx.DB, configuration models.Configuration) *Coordinator {
+func New(db *sqlx.DB, configuration models.Configuration) (context.Context, *Coordinator) {
+	ctx, cancel := context.WithCancel(context.Background())
 	c := &Coordinator{
 		configuration: configuration,
 		buildDAO:      models.NewBuildDAO(db),
 		in:            make(chan *models.Build, 10),
+		ctx:           ctx,
+		cancel:        cancel,
 	}
 	c.bootstrap()
 	go c.forward()
-	return c
+	return ctx, c
 }
 
 func (c *Coordinator) setError(err error) {
@@ -41,11 +46,16 @@ func (c *Coordinator) setError(err error) {
 		return
 	}
 	c.errMu.Lock()
-	// TODO: remove this log line when the relationship between coordinator
-	// and its peers is solved.
-	log.Println("coordinator err trapped:", err)
 	c.err = err
 	c.errMu.Unlock()
+	c.cancel()
+}
+
+// Wait returns when coordinator is done doing its works. Return any error
+// found.
+func (c *Coordinator) Wait() error {
+	<-c.ctx.Done()
+	return c.Error()
 }
 
 func (c *Coordinator) bootstrap() {
@@ -105,8 +115,8 @@ func isValidSecret(sig string, secret, body []byte) bool {
 }
 
 // Next returns the next job in the pipe. If nil, the client must stop reading.
-func (c *Coordinator) Next(repoFullName string) *models.Build {
-	return <-c.out.ch(repoFullName)
+func (c *Coordinator) Next(repoFullName string) <-chan *models.Build {
+	return c.out.ch(repoFullName)
 }
 
 // MarkInProgress determines a build has started and update its build
