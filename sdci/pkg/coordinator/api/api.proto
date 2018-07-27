@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package api;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+service Runner {
+    rpc Run(stream Job) returns (stream Job) {}
+}
+
+message Job {
+	Recipe recipe = 1;
+	Build build = 2;
+}
+
+message Recipe {
+	int64 concurrency = 1;
+	string clone = 2;
+	string slackWebhook = 3;
+	string githubSecret = 4;
+	string environment = 5;
+	string commands = 6;
+}
+
+message Build {
+	int64 ID = 1;
+	string repoFullName  = 2;
+	string commitHash = 3;
+	string commitMessage = 4;
+	google.protobuf.Timestamp startedAt = 5 [(gogoproto.stdtime) = true];
+	bool success = 6;
+	string log = 7;
+	google.protobuf.Timestamp completedAt = 8 [(gogoproto.stdtime) = true];
+}
+

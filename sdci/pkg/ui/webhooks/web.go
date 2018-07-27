@@ -49,11 +49,9 @@ func (s *Server) ServeContext(ctx context.Context, l net.Listener) error {
 			return
 		}
 		sig := r.Header.Get("X-Hub-Signature")
-		if err := s.coordinator.Enqueue(&models.Build{
-			RepoFullName:  payload.Repository.FullName,
-			CommitHash:    payload.CommitHash,
-			CommitMessage: payload.HeadCommit.Message,
-		}, sig, body); err != nil {
+		if err := s.coordinator.Enqueue(payload.Repository.FullName,
+			payload.CommitHash, payload.HeadCommit.Message,
+			sig, body); err != nil {
 			log.Println("cannot enqueue payload:", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
 				http.StatusInternalServerError)

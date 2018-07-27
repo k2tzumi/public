@@ -4,20 +4,14 @@ import (
 	"time"
 
 	"cirello.io/errors"
+	"cirello.io/exp/sdci/pkg/coordinator/api"
 	"github.com/jmoiron/sqlx"
 )
 
 // Build defines the necessary data to run a build successfully.
 type Build struct {
-	ID            int64     `db:"id" json:"id,omitempty"`
-	RepoFullName  string    `db:"repo_full_name" json:"repo_full_name,omitempty"`
-	CommitHash    string    `db:"commit_hash" json:"commit_hash,omitempty"`
-	CommitMessage string    `db:"commit_message" json:"commit_message,omitempty"`
-	StartedAt     time.Time `db:"started_at" json:"started_at,omitempty"`
-	Success       bool      `db:"success" json:"success,omitempty"`
-	Log           string    `db:"log" json:"log,omitempty"`
-	CompletedAt   time.Time `db:"completed_at" json:"completed_at,omitempty"`
-	*Recipe
+	*api.Build
+	*api.Recipe
 }
 
 // Status define the current build status of a Build
@@ -106,7 +100,8 @@ func (b *BuildDAO) Register(build *Build) (*Build, error) {
 // MarkInProgress determines a build has started and update its build
 // information in the database.
 func (b *BuildDAO) MarkInProgress(build *Build) error {
-	build.StartedAt = time.Now()
+	now := time.Now()
+	build.StartedAt = &now
 	_, err := b.db.NamedExec(`
 		UPDATE builds
 		SET started_at = :started_at
@@ -118,7 +113,8 @@ func (b *BuildDAO) MarkInProgress(build *Build) error {
 // MarkComplete determines a build has completed and update its build
 // information in the database.
 func (b *BuildDAO) MarkComplete(build *Build) error {
-	build.CompletedAt = time.Now()
+	now := time.Now()
+	build.CompletedAt = &now
 	_, err := b.db.NamedExec(`
 		UPDATE builds
 		SET
