@@ -18,6 +18,8 @@ message JobRequest {
 	oneof command {
 		BuildRequest build = 1;
 		KeepAlive keepAlive = 2;
+		Build markInProgress = 3;
+		Build markComplete = 4;
 	}
 }
 

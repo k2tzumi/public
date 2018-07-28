@@ -9,12 +9,15 @@ import (
 	"path/filepath"
 
 	"cirello.io/exp/sdci/pkg/coordinator"
+	"cirello.io/exp/sdci/pkg/grpc/api"
+	"cirello.io/exp/sdci/pkg/grpc/server"
 	"cirello.io/exp/sdci/pkg/models"
 	"cirello.io/exp/sdci/pkg/ui/dashboard"
 	"cirello.io/exp/sdci/pkg/ui/webhooks"
 	"cirello.io/exp/sdci/pkg/worker"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -24,9 +27,11 @@ func main() {
 	db := openDB()
 	configuration := loadConfiguration()
 	ctx, coord := startCoordinator(db, configuration)
-	startWorkers(ctx, buildsDir, coord, configuration)
 	startWebhooksServer(ctx, coord)
 	startDashboard(ctx, db)
+	log.Println("ok")
+	addr := startGRPCServer(ctx, coord, configuration)
+	startWorkers(ctx, addr, buildsDir, coord, configuration)
 	if err := coord.Wait(); err != nil {
 		log.Fatalln("coordinator error:", err)
 	}
@@ -68,9 +73,10 @@ func startCoordinator(db *sqlx.DB, configuration models.Configuration) (context.
 	return ctx, coord
 }
 
-func startWorkers(ctx context.Context, buildsDir string,
+func startWorkers(ctx context.Context, grpcServerAddr, buildsDir string,
 	coord *coordinator.Coordinator, configuration models.Configuration) {
-	if err := worker.Start(ctx, buildsDir, coord, configuration); err != nil {
+	err := worker.Start(ctx, grpcServerAddr, buildsDir, configuration)
+	if err != nil {
 		log.Fatalln("coordinator error on start:", err)
 	}
 }
@@ -92,7 +98,27 @@ func startDashboard(ctx context.Context, db *sqlx.DB) {
 		log.Fatalln("cannot start dashboard server:", err)
 	}
 	dashboardServer := dashboard.New(models.NewBuildDAO(db))
-	if err := dashboardServer.ServeContext(ctx, dashboardListener); err != nil {
-		log.Println("cannot server dashboard:", err)
+	go func() {
+		if err := dashboardServer.ServeContext(ctx, dashboardListener); err != nil {
+			log.Fatalln("cannot server dashboard:", err)
+		}
+	}()
+}
+
+func startGRPCServer(ctx context.Context, coord *coordinator.Coordinator, configuration models.Configuration) string {
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		log.Fatalln("cannot start dashboard server:", err)
 	}
+	s := server.New(coord, configuration)
+	grpcServer := grpc.NewServer()
+	api.RegisterRunnerServer(grpcServer, s)
+	go func() {
+		err := grpcServer.Serve(l)
+		if err != nil {
+			log.Fatalln("errors in GRPC server:", err)
+		}
+	}()
+
+	return l.Addr().String()
 }
