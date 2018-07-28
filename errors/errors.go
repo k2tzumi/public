@@ -462,3 +462,12 @@ func RootCause(err error) error {
 
 	return RootCause(e.Err)
 }
+
+// Wrapf wraps the given error with a formatted comment.
+func Wrapf(err error, msg string, args ...interface{}) error {
+	if err == nil {
+		return nil
+	}
+
+	return E(err, Op(fmt.Sprintf(msg, args...)))
+}
