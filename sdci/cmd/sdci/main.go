@@ -11,6 +11,7 @@ import (
 	"cirello.io/exp/sdci/pkg/coordinator"
 	"cirello.io/exp/sdci/pkg/grpc/api"
 	"cirello.io/exp/sdci/pkg/grpc/server"
+	"cirello.io/exp/sdci/pkg/infra/repositories"
 	"cirello.io/exp/sdci/pkg/models"
 	"cirello.io/exp/sdci/pkg/ui/dashboard"
 	"cirello.io/exp/sdci/pkg/ui/webhooks"
@@ -97,7 +98,7 @@ func startDashboard(ctx context.Context, db *sqlx.DB) {
 	if err != nil {
 		log.Fatalln("cannot start dashboard server:", err)
 	}
-	dashboardServer := dashboard.New(models.NewBuildDAO(db))
+	dashboardServer := dashboard.New(repositories.Builds(db))
 	go func() {
 		if err := dashboardServer.ServeContext(ctx, dashboardListener); err != nil {
 			log.Fatalln("cannot server dashboard:", err)

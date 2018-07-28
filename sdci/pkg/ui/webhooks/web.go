@@ -1,4 +1,7 @@
+// Package webhooks implements the public interface used to communicate with
+// Github.
 package webhooks // import "cirello.io/exp/sdci/pkg/ui/webhooks"
+
 import (
 	"context"
 	"encoding/json"

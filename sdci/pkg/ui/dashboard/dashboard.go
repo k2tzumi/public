@@ -1,3 +1,4 @@
+// Package dashboard implements a build web dashboard.
 package dashboard // import "cirello.io/exp/sdci/pkg/ui/dashboard"
 
 import (
@@ -16,11 +17,11 @@ import (
 
 // Server implements the dashboard.
 type Server struct {
-	buildDAO *models.BuildDAO
+	buildDAO models.BuildRepository
 }
 
 // New creates a new builds dashboard.
-func New(buildDAO *models.BuildDAO) *Server {
+func New(buildDAO models.BuildRepository) *Server {
 	return &Server{
 		buildDAO: buildDAO,
 	}

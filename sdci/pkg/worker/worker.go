@@ -1,3 +1,4 @@
+// Package worker implements the build worker.
 package worker // import "cirello.io/exp/sdci/pkg/worker"
 
 import (
