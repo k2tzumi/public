@@ -44,7 +44,7 @@ func Start(ctx context.Context, grpcServerAddr, buildsDir string) error {
 			buildsDir := fmt.Sprintf(buildsDir, i)
 			if err := os.MkdirAll(buildsDir,
 				os.ModePerm&0700); err != nil {
-				return errors.E(err, "cannot create .sdci build directory")
+				return errors.E(err, "cannot create .cci build directory")
 			}
 			go worker(ctx, cc, buildsDir, repoFullName, i)
 		}

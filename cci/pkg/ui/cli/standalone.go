@@ -72,11 +72,11 @@ func (m *standaloneMode) buildsDir() string {
 		m.setError(errors.E(err, "cannot load current user information"))
 		return ""
 	}
-	return filepath.Join(currentUser.HomeDir, ".sdci", "builds-%v")
+	return filepath.Join(currentUser.HomeDir, ".cci", "builds-%v")
 }
 
 func (m *standaloneMode) loadConfiguration() models.Configuration {
-	fd, err := os.Open("sdci-config.yaml")
+	fd, err := os.Open("cci-config.yaml")
 	if err != nil {
 		m.setError(errors.E("cannot open configuration file"))
 		return nil

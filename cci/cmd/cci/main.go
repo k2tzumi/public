@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Command sdci implements a simple and dirty CI service.
+// Command cci implements a simple and dirty CI service.
 package main // import "cirello.io/cci/cmd/cci"
 
 import (
@@ -25,10 +25,10 @@ import (
 )
 
 func main() {
-	log.SetPrefix("sdci: ")
+	log.SetPrefix("cci: ")
 	log.SetFlags(0)
-	fn := "sdci.db"
-	if envFn := os.Getenv("SDCI_DB"); envFn != "" {
+	fn := "cci.db"
+	if envFn := os.Getenv("CCI_DB"); envFn != "" {
 		fn = envFn
 	}
 	db := openDB(fn)
