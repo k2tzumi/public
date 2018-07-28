@@ -94,25 +94,25 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 				return
 			}
 			switch req.GetCommand().(type) {
-			case *api.JobRequest_MarkInProgress:
-				build := req.GetMarkInProgress()
-				err := s.coord.MarkInProgress(&models.Build{
-					Build: build,
-				})
-				if err != nil {
-					log.Println("cannot mark build", build.ID, "as in progress:", err)
-				}
-			case *api.JobRequest_MarkComplete:
-				build := req.GetMarkComplete()
-				err := s.coord.MarkComplete(&models.Build{
-					Build: build,
-				})
-				if err != nil {
-					log.Println("cannot mark build", build.ID, "as complete:", err)
-				}
 			case *api.JobRequest_KeepAlive:
 				if err := s.refreshLock(lockIndex, lockSeq); err != nil {
 					err := errors.E(err, "lost lock")
+					log.Println(err)
+					return
+				}
+			case *api.JobRequest_MarkInProgress:
+				build := req.GetMarkInProgress()
+				err := s.markInProgress(build, lockIndex, lockSeq)
+				if err != nil {
+					err := errors.Wrapf(err, "cannot mark build", build.ID, "as in progress")
+					log.Println(err)
+					return
+				}
+			case *api.JobRequest_MarkComplete:
+				build := req.GetMarkComplete()
+				err := s.markComplete(build, lockIndex, lockSeq)
+				if err != nil {
+					err := errors.Wrapf(err, "cannot mark build", build.ID, "as completed")
 					log.Println(err)
 					return
 				}
@@ -134,6 +134,41 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 			}
 		}
 	}
+}
+
+func (s *Server) refreshLock(lockName string, seq int) error {
+	s.lockRefresh.L.Lock()
+	defer s.lockRefresh.L.Unlock()
+	defer s.lockRefresh.Broadcast()
+	l, ok := s.locks[lockName]
+	if !ok {
+		return errors.Errorf("cannot find lock for %s", lockName)
+	}
+	if l.seq != seq {
+		return errors.E("not current lock owner")
+	}
+	l.refresh(seq)
+	return nil
+}
+
+func (s *Server) markInProgress(build *api.Build, lockIndex string, lockSeq int) error {
+	if err := s.refreshLock(lockIndex, lockSeq); err != nil {
+		return errors.E(err)
+	}
+	err := s.coord.MarkInProgress(&models.Build{
+		Build: build,
+	})
+	return errors.E(err)
+}
+
+func (s *Server) markComplete(build *api.Build, lockIndex string, lockSeq int) error {
+	if err := s.refreshLock(lockIndex, lockSeq); err != nil {
+		return errors.E(err)
+	}
+	err := s.coord.MarkComplete(&models.Build{
+		Build: build,
+	})
+	return errors.E(err)
 }
 
 func (s *Server) dispatchBuild(srv api.Runner_RunServer, repoName, lockIndex string, lockSeq int, build *models.Build) error {
@@ -189,21 +224,6 @@ func (s *Server) expireLocks() {
 		s.lockRefresh.Broadcast()
 		s.lockRefresh.L.Unlock()
 	}
-}
-
-func (s *Server) refreshLock(lockName string, seq int) error {
-	s.lockRefresh.L.Lock()
-	defer s.lockRefresh.L.Unlock()
-	defer s.lockRefresh.Broadcast()
-	l, ok := s.locks[lockName]
-	if !ok {
-		return errors.Errorf("cannot find lock for %s", lockName)
-	}
-	if l.seq != seq {
-		return errors.E("not current lock owner")
-	}
-	l.refresh(seq)
-	return nil
 }
 
 func (s *Server) isLockOwner(lockName string, seq int) bool {
