@@ -72,6 +72,7 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 	defer cancel()
 
 	go func() {
+		defer cancel()
 		t := time.Tick(1 * time.Second)
 		for {
 			select {
@@ -81,40 +82,36 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 				if !s.isLockOwner(lockIndex, lockSeq) {
 					cancel()
 				}
-			}
-		}
-	}()
-	go func() {
-		defer cancel()
-		for {
-			req, err := srv.Recv()
-			if err != nil {
-				err := errors.E(err, "error receiving call from client")
-				log.Println(err)
-				return
-			}
-			switch req.GetCommand().(type) {
-			case *api.JobRequest_KeepAlive:
-				if err := s.refreshLock(lockIndex, lockSeq); err != nil {
-					err := errors.E(err, "lost lock")
+			default:
+				req, err := srv.Recv()
+				if err != nil {
+					err := errors.E(err, "error receiving call from client")
 					log.Println(err)
 					return
 				}
-			case *api.JobRequest_MarkInProgress:
-				build := req.GetMarkInProgress()
-				err := s.markInProgress(build, lockIndex, lockSeq)
-				if err != nil {
-					err := errors.Wrapf(err, "cannot mark build", build.ID, "as in progress")
-					log.Println(err)
-					return
-				}
-			case *api.JobRequest_MarkComplete:
-				build := req.GetMarkComplete()
-				err := s.markComplete(build, lockIndex, lockSeq)
-				if err != nil {
-					err := errors.Wrapf(err, "cannot mark build", build.ID, "as completed")
-					log.Println(err)
-					return
+				switch req.GetCommand().(type) {
+				case *api.JobRequest_KeepAlive:
+					if err := s.refreshLock(lockIndex, lockSeq); err != nil {
+						err := errors.E(err, "lost lock")
+						log.Println(err)
+						return
+					}
+				case *api.JobRequest_MarkInProgress:
+					build := req.GetMarkInProgress()
+					err := s.markInProgress(build, lockIndex, lockSeq)
+					if err != nil {
+						err := errors.Wrapf(err, "cannot mark build", build.ID, "as in progress")
+						log.Println(err)
+						return
+					}
+				case *api.JobRequest_MarkComplete:
+					build := req.GetMarkComplete()
+					err := s.markComplete(build, lockIndex, lockSeq)
+					if err != nil {
+						err := errors.Wrapf(err, "cannot mark build", build.ID, "as completed")
+						log.Println(err)
+						return
+					}
 				}
 			}
 		}
@@ -128,8 +125,8 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 		case build := <-s.coord.Next(repoName):
 			if err := s.dispatchBuild(srv, repoName, lockIndex, lockSeq, build); err != nil {
 				cancel()
-				s.coord.Recover(repoName, build)
 				log.Println("cannot dispatch build:", err)
+				s.coord.Recover(repoName, build)
 				return err
 			}
 		}
