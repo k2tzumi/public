@@ -17,6 +17,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -57,8 +58,8 @@ func run(ctx context.Context, recipe *api.Recipe, repoDir, baseDir string) (stri
 		cmd.Env = append(cmd.Env, os.Expand(v, expandVar(cmd.Env)))
 	}
 	var buf crbuffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+	cmd.Stdout = io.MultiWriter(&buf, os.Stdout)
+	cmd.Stderr = io.MultiWriter(&buf, os.Stderr)
 	err = cmd.Run()
 	return buf.String(), errors.E(err, "failed when running builder")
 }
