@@ -8,6 +8,8 @@
 		api.proto
 
 	It has these top-level messages:
+		ConfigurationRequest
+		ConfigurationResponse
 		JobResponse
 		JobRequest
 		BuildRequest
@@ -44,6 +46,30 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type ConfigurationRequest struct {
+}
+
+func (m *ConfigurationRequest) Reset()                    { *m = ConfigurationRequest{} }
+func (m *ConfigurationRequest) String() string            { return proto.CompactTextString(m) }
+func (*ConfigurationRequest) ProtoMessage()               {}
+func (*ConfigurationRequest) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{0} }
+
+type ConfigurationResponse struct {
+	Configuration map[string]*Recipe `protobuf:"bytes,1,rep,name=configuration" json:"configuration,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value"`
+}
+
+func (m *ConfigurationResponse) Reset()                    { *m = ConfigurationResponse{} }
+func (m *ConfigurationResponse) String() string            { return proto.CompactTextString(m) }
+func (*ConfigurationResponse) ProtoMessage()               {}
+func (*ConfigurationResponse) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{1} }
+
+func (m *ConfigurationResponse) GetConfiguration() map[string]*Recipe {
+	if m != nil {
+		return m.Configuration
+	}
+	return nil
+}
+
 type JobResponse struct {
 	Recipe *Recipe `protobuf:"bytes,1,opt,name=recipe" json:"recipe,omitempty"`
 	Build  *Build  `protobuf:"bytes,2,opt,name=build" json:"build,omitempty"`
@@ -52,7 +78,7 @@ type JobResponse struct {
 func (m *JobResponse) Reset()                    { *m = JobResponse{} }
 func (m *JobResponse) String() string            { return proto.CompactTextString(m) }
 func (*JobResponse) ProtoMessage()               {}
-func (*JobResponse) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{0} }
+func (*JobResponse) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{2} }
 
 func (m *JobResponse) GetRecipe() *Recipe {
 	if m != nil {
@@ -80,7 +106,7 @@ type JobRequest struct {
 func (m *JobRequest) Reset()                    { *m = JobRequest{} }
 func (m *JobRequest) String() string            { return proto.CompactTextString(m) }
 func (*JobRequest) ProtoMessage()               {}
-func (*JobRequest) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{1} }
+func (*JobRequest) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{3} }
 
 type isJobRequest_Command interface {
 	isJobRequest_Command()
@@ -260,7 +286,7 @@ type BuildRequest struct {
 func (m *BuildRequest) Reset()                    { *m = BuildRequest{} }
 func (m *BuildRequest) String() string            { return proto.CompactTextString(m) }
 func (*BuildRequest) ProtoMessage()               {}
-func (*BuildRequest) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{2} }
+func (*BuildRequest) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{4} }
 
 func (m *BuildRequest) GetRepoFullName() string {
 	if m != nil {
@@ -275,7 +301,7 @@ type KeepAlive struct {
 func (m *KeepAlive) Reset()                    { *m = KeepAlive{} }
 func (m *KeepAlive) String() string            { return proto.CompactTextString(m) }
 func (*KeepAlive) ProtoMessage()               {}
-func (*KeepAlive) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{3} }
+func (*KeepAlive) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{5} }
 
 type Recipe struct {
 	Concurrency  int64  `protobuf:"varint,1,opt,name=concurrency,proto3" json:"concurrency,omitempty" yaml:"concurrency" db:"concurrency"`
@@ -289,7 +315,7 @@ type Recipe struct {
 func (m *Recipe) Reset()                    { *m = Recipe{} }
 func (m *Recipe) String() string            { return proto.CompactTextString(m) }
 func (*Recipe) ProtoMessage()               {}
-func (*Recipe) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{4} }
+func (*Recipe) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{6} }
 
 func (m *Recipe) GetConcurrency() int64 {
 	if m != nil {
@@ -347,7 +373,7 @@ type Build struct {
 func (m *Build) Reset()                    { *m = Build{} }
 func (m *Build) String() string            { return proto.CompactTextString(m) }
 func (*Build) ProtoMessage()               {}
-func (*Build) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{5} }
+func (*Build) Descriptor() ([]byte, []int) { return fileDescriptorApi, []int{7} }
 
 func (m *Build) GetID() int64 {
 	if m != nil {
@@ -406,6 +432,8 @@ func (m *Build) GetCompletedAt() *time.Time {
 }
 
 func init() {
+	proto.RegisterType((*ConfigurationRequest)(nil), "api.ConfigurationRequest")
+	proto.RegisterType((*ConfigurationResponse)(nil), "api.ConfigurationResponse")
 	proto.RegisterType((*JobResponse)(nil), "api.JobResponse")
 	proto.RegisterType((*JobRequest)(nil), "api.JobRequest")
 	proto.RegisterType((*BuildRequest)(nil), "api.BuildRequest")
@@ -425,6 +453,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Runner service
 
 type RunnerClient interface {
+	Configuration(ctx context.Context, in *ConfigurationRequest, opts ...grpc.CallOption) (*ConfigurationResponse, error)
 	Run(ctx context.Context, opts ...grpc.CallOption) (Runner_RunClient, error)
 }
 
@@ -434,6 +463,15 @@ type runnerClient struct {
 
 func NewRunnerClient(cc *grpc.ClientConn) RunnerClient {
 	return &runnerClient{cc}
+}
+
+func (c *runnerClient) Configuration(ctx context.Context, in *ConfigurationRequest, opts ...grpc.CallOption) (*ConfigurationResponse, error) {
+	out := new(ConfigurationResponse)
+	err := grpc.Invoke(ctx, "/api.Runner/Configuration", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *runnerClient) Run(ctx context.Context, opts ...grpc.CallOption) (Runner_RunClient, error) {
@@ -470,11 +508,30 @@ func (x *runnerRunClient) Recv() (*JobResponse, error) {
 // Server API for Runner service
 
 type RunnerServer interface {
+	Configuration(context.Context, *ConfigurationRequest) (*ConfigurationResponse, error)
 	Run(Runner_RunServer) error
 }
 
 func RegisterRunnerServer(s *grpc.Server, srv RunnerServer) {
 	s.RegisterService(&_Runner_serviceDesc, srv)
+}
+
+func _Runner_Configuration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigurationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RunnerServer).Configuration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Runner/Configuration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RunnerServer).Configuration(ctx, req.(*ConfigurationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Runner_Run_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -506,7 +563,12 @@ func (x *runnerRunServer) Recv() (*JobRequest, error) {
 var _Runner_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "api.Runner",
 	HandlerType: (*RunnerServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Configuration",
+			Handler:    _Runner_Configuration_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Run",
@@ -516,6 +578,70 @@ var _Runner_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Metadata: "api.proto",
+}
+
+func (m *ConfigurationRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ConfigurationRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	return i, nil
+}
+
+func (m *ConfigurationResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ConfigurationResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Configuration) > 0 {
+		for k, _ := range m.Configuration {
+			dAtA[i] = 0xa
+			i++
+			v := m.Configuration[k]
+			msgSize := 0
+			if v != nil {
+				msgSize = v.Size()
+				msgSize += 1 + sovApi(uint64(msgSize))
+			}
+			mapSize := 1 + len(k) + sovApi(uint64(len(k))) + msgSize
+			i = encodeVarintApi(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintApi(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			if v != nil {
+				dAtA[i] = 0x12
+				i++
+				i = encodeVarintApi(dAtA, i, uint64(v.Size()))
+				n1, err := v.MarshalTo(dAtA[i:])
+				if err != nil {
+					return 0, err
+				}
+				i += n1
+			}
+		}
+	}
+	return i, nil
 }
 
 func (m *JobResponse) Marshal() (dAtA []byte, err error) {
@@ -537,21 +663,21 @@ func (m *JobResponse) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(m.Recipe.Size()))
-		n1, err := m.Recipe.MarshalTo(dAtA[i:])
+		n2, err := m.Recipe.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n1
+		i += n2
 	}
 	if m.Build != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(m.Build.Size()))
-		n2, err := m.Build.MarshalTo(dAtA[i:])
+		n3, err := m.Build.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n2
+		i += n3
 	}
 	return i, nil
 }
@@ -572,11 +698,11 @@ func (m *JobRequest) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Command != nil {
-		nn3, err := m.Command.MarshalTo(dAtA[i:])
+		nn4, err := m.Command.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += nn3
+		i += nn4
 	}
 	return i, nil
 }
@@ -587,11 +713,11 @@ func (m *JobRequest_Build) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(m.Build.Size()))
-		n4, err := m.Build.MarshalTo(dAtA[i:])
+		n5, err := m.Build.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n4
+		i += n5
 	}
 	return i, nil
 }
@@ -601,11 +727,11 @@ func (m *JobRequest_KeepAlive) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(m.KeepAlive.Size()))
-		n5, err := m.KeepAlive.MarshalTo(dAtA[i:])
+		n6, err := m.KeepAlive.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n5
+		i += n6
 	}
 	return i, nil
 }
@@ -615,11 +741,11 @@ func (m *JobRequest_MarkInProgress) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(m.MarkInProgress.Size()))
-		n6, err := m.MarkInProgress.MarshalTo(dAtA[i:])
+		n7, err := m.MarkInProgress.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n6
+		i += n7
 	}
 	return i, nil
 }
@@ -629,11 +755,11 @@ func (m *JobRequest_MarkComplete) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(m.MarkComplete.Size()))
-		n7, err := m.MarkComplete.MarshalTo(dAtA[i:])
+		n8, err := m.MarkComplete.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n7
+		i += n8
 	}
 	return i, nil
 }
@@ -774,11 +900,11 @@ func (m *Build) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(types.SizeOfStdTime(*m.StartedAt)))
-		n8, err := types.StdTimeMarshalTo(*m.StartedAt, dAtA[i:])
+		n9, err := types.StdTimeMarshalTo(*m.StartedAt, dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n8
+		i += n9
 	}
 	if m.Success {
 		dAtA[i] = 0x30
@@ -800,11 +926,11 @@ func (m *Build) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintApi(dAtA, i, uint64(types.SizeOfStdTime(*m.CompletedAt)))
-		n9, err := types.StdTimeMarshalTo(*m.CompletedAt, dAtA[i:])
+		n10, err := types.StdTimeMarshalTo(*m.CompletedAt, dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n9
+		i += n10
 	}
 	return i, nil
 }
@@ -818,6 +944,31 @@ func encodeVarintApi(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
+func (m *ConfigurationRequest) Size() (n int) {
+	var l int
+	_ = l
+	return n
+}
+
+func (m *ConfigurationResponse) Size() (n int) {
+	var l int
+	_ = l
+	if len(m.Configuration) > 0 {
+		for k, v := range m.Configuration {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				l = v.Size()
+				l += 1 + sovApi(uint64(l))
+			}
+			mapEntrySize := 1 + len(k) + sovApi(uint64(len(k))) + l
+			n += mapEntrySize + 1 + sovApi(uint64(mapEntrySize))
+		}
+	}
+	return n
+}
+
 func (m *JobResponse) Size() (n int) {
 	var l int
 	_ = l
@@ -970,6 +1121,229 @@ func sovApi(x uint64) (n int) {
 }
 func sozApi(x uint64) (n int) {
 	return sovApi(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *ConfigurationRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ConfigurationRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ConfigurationRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ConfigurationResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ConfigurationResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ConfigurationResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Configuration", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Configuration == nil {
+				m.Configuration = make(map[string]*Recipe)
+			}
+			var mapkey string
+			var mapvalue *Recipe
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowApi
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowApi
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= (uint64(b) & 0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthApi
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowApi
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= (int(b) & 0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthApi
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if mapmsglen < 0 {
+						return ErrInvalidLengthApi
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &Recipe{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipApi(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if skippy < 0 {
+						return ErrInvalidLengthApi
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Configuration[mapkey] = mapvalue
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *JobResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -1987,40 +2361,47 @@ var (
 func init() { proto.RegisterFile("api.proto", fileDescriptorApi) }
 
 var fileDescriptorApi = []byte{
-	// 557 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0xcb, 0x6e, 0xd3, 0x40,
-	0x14, 0x8d, 0x93, 0xe6, 0xe1, 0xeb, 0x10, 0xc2, 0x88, 0x85, 0x95, 0x45, 0x5a, 0x19, 0x16, 0x65,
-	0x81, 0x5b, 0x05, 0x16, 0xac, 0x90, 0x1a, 0x2a, 0x94, 0x80, 0x40, 0x68, 0xa8, 0xc4, 0xda, 0x76,
-	0x2e, 0x8e, 0x15, 0x7b, 0xc6, 0xcc, 0xd8, 0x95, 0xf8, 0x0b, 0x96, 0xfc, 0x06, 0x3f, 0x81, 0x58,
-	0xb2, 0x66, 0x03, 0x0a, 0x3f, 0x82, 0x66, 0xc6, 0x6e, 0x9c, 0x96, 0x45, 0x77, 0xbe, 0xe7, 0x9e,
-	0x73, 0x5f, 0x3e, 0x03, 0x76, 0x90, 0x27, 0x7e, 0x2e, 0x78, 0xc1, 0x49, 0x27, 0xc8, 0x93, 0xc9,
-	0xe3, 0x38, 0x29, 0xd6, 0x65, 0xe8, 0x47, 0x3c, 0x3b, 0x89, 0x79, 0xcc, 0x4f, 0x74, 0x2e, 0x2c,
-	0x3f, 0xea, 0x48, 0x07, 0xfa, 0xcb, 0x68, 0x26, 0x87, 0x31, 0xe7, 0x71, 0x8a, 0x3b, 0x56, 0x91,
-	0x64, 0x28, 0x8b, 0x20, 0xcb, 0x0d, 0xc1, 0xbb, 0x00, 0xe7, 0x15, 0x0f, 0x29, 0xca, 0x9c, 0x33,
-	0x89, 0xe4, 0x01, 0xf4, 0x04, 0x46, 0x49, 0x8e, 0xae, 0x75, 0x64, 0x1d, 0x3b, 0x33, 0xc7, 0x57,
-	0xfd, 0xa9, 0x86, 0x68, 0x95, 0x22, 0x47, 0xd0, 0x0d, 0xcb, 0x24, 0x5d, 0xb9, 0x6d, 0xcd, 0x01,
-	0xcd, 0x99, 0x2b, 0x84, 0x9a, 0x84, 0xf7, 0xcb, 0x02, 0xd0, 0x65, 0x3f, 0x95, 0x28, 0x0b, 0xf2,
-	0xa8, 0x16, 0x98, 0xa2, 0xf7, 0x1a, 0x02, 0xc3, 0x58, 0xb4, 0x2a, 0x25, 0xf1, 0xc1, 0xde, 0x20,
-	0xe6, 0x67, 0x69, 0x72, 0x89, 0x55, 0xfd, 0x91, 0xa6, 0xbf, 0xae, 0xd1, 0x45, 0x8b, 0xee, 0x28,
-	0xe4, 0x29, 0x8c, 0xb2, 0x40, 0x6c, 0x96, 0xec, 0x9d, 0xe0, 0xb1, 0x40, 0x29, 0xdd, 0xce, 0xf5,
-	0xa1, 0x16, 0x2d, 0x7a, 0x8d, 0x43, 0x4e, 0x61, 0xa8, 0x90, 0x17, 0x3c, 0xcb, 0x53, 0x2c, 0xd0,
-	0x3d, 0xf8, 0x8f, 0x66, 0x8f, 0x31, 0xb7, 0xa1, 0x1f, 0xf1, 0x2c, 0x0b, 0xd8, 0xca, 0x9b, 0xc1,
-	0xb0, 0x39, 0x3b, 0xf1, 0x60, 0x28, 0x30, 0xe7, 0x2f, 0xcb, 0x34, 0x7d, 0x1b, 0x64, 0xe6, 0x72,
-	0x36, 0xdd, 0xc3, 0x3c, 0x07, 0xec, 0xab, 0x05, 0xbc, 0xef, 0x16, 0xf4, 0x68, 0x7d, 0x4a, 0x27,
-	0xe2, 0x2c, 0x2a, 0x85, 0x40, 0x16, 0x7d, 0xd6, 0xd2, 0x0e, 0x6d, 0x42, 0xe4, 0x3e, 0x74, 0xa3,
-	0x94, 0x33, 0x73, 0x0c, 0x9b, 0x9a, 0x40, 0xf5, 0x94, 0x69, 0x10, 0x6d, 0x3e, 0x60, 0xb8, 0xe6,
-	0x7c, 0xa3, 0x97, 0xb6, 0xe9, 0x1e, 0xa6, 0x38, 0xc6, 0x2c, 0xef, 0x31, 0x12, 0x58, 0xe8, 0x25,
-	0x6d, 0xba, 0x87, 0xa9, 0xfe, 0xc8, 0x2e, 0x13, 0xc1, 0x59, 0x86, 0xac, 0x70, 0xbb, 0x9a, 0xd2,
-	0x84, 0xc8, 0x04, 0x06, 0xd5, 0xe2, 0xd2, 0xed, 0xe9, 0xf4, 0x55, 0xec, 0x7d, 0x6b, 0x43, 0x57,
-	0x9f, 0x82, 0x8c, 0xa0, 0xbd, 0x3c, 0xaf, 0xc6, 0x6f, 0x2f, 0xcf, 0x6f, 0xdc, 0xa4, 0x7d, 0xf3,
-	0x26, 0x64, 0x0a, 0xa0, 0x2a, 0x25, 0xc5, 0x22, 0x90, 0xeb, 0x6a, 0x83, 0x06, 0x42, 0x1e, 0xc2,
-	0x1d, 0x13, 0xbd, 0x41, 0x29, 0x83, 0x18, 0xab, 0x05, 0xf6, 0x41, 0xf2, 0x1c, 0x6c, 0x59, 0x04,
-	0xa2, 0xc0, 0xd5, 0x99, 0x99, 0xdf, 0x99, 0x4d, 0x7c, 0xe3, 0x7a, 0xbf, 0x76, 0xbd, 0x7f, 0x51,
-	0xbb, 0x7e, 0x7e, 0xf0, 0xe5, 0xf7, 0xa1, 0x45, 0x77, 0x12, 0xe2, 0x42, 0x5f, 0x96, 0x51, 0xa4,
-	0x9c, 0xa3, 0xd6, 0x1b, 0xd0, 0x3a, 0x24, 0x63, 0xe8, 0xa4, 0x3c, 0x76, 0xfb, 0xba, 0xab, 0xfa,
-	0x24, 0x73, 0xf5, 0xb7, 0x8c, 0x21, 0x54, 0xb7, 0xc1, 0x2d, 0xbb, 0x35, 0x45, 0xb3, 0x67, 0xd0,
-	0xa3, 0x25, 0x63, 0x28, 0x88, 0x0f, 0x1d, 0x5a, 0x32, 0x72, 0x57, 0xbb, 0x6e, 0xf7, 0x5a, 0x26,
-	0xe3, 0x1d, 0x60, 0x5e, 0xa5, 0xd7, 0x3a, 0xb6, 0x4e, 0xad, 0xf9, 0xf8, 0xc7, 0x76, 0x6a, 0xfd,
-	0xdc, 0x4e, 0xad, 0x3f, 0xdb, 0xa9, 0xf5, 0xf5, 0xef, 0xb4, 0x15, 0xf6, 0x74, 0xcb, 0x27, 0xff,
-	0x02, 0x00, 0x00, 0xff, 0xff, 0x5c, 0x30, 0xd8, 0x64, 0x25, 0x04, 0x00, 0x00,
+	// 661 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0x41, 0x6f, 0xd3, 0x4c,
+	0x10, 0xcd, 0x26, 0x4d, 0x5a, 0x8f, 0xdb, 0x7e, 0xfd, 0x56, 0x05, 0x19, 0x1f, 0xd2, 0x60, 0x38,
+	0x84, 0x43, 0xdd, 0x2a, 0x70, 0x40, 0x1c, 0x90, 0x9a, 0x16, 0x94, 0x82, 0x8a, 0xd0, 0xb6, 0x12,
+	0x67, 0xc7, 0xdd, 0xba, 0x56, 0xec, 0x5d, 0xb3, 0x5e, 0x57, 0xea, 0x95, 0x5f, 0xc0, 0x91, 0xbf,
+	0xc1, 0x99, 0x3b, 0xe2, 0xc8, 0x99, 0x0b, 0xa8, 0xfc, 0x11, 0xb4, 0xbb, 0x76, 0x63, 0xa7, 0x45,
+	0xe2, 0xe6, 0x79, 0xf3, 0xde, 0xec, 0xcc, 0xec, 0x3e, 0x83, 0x15, 0x64, 0xb1, 0x9f, 0x09, 0x2e,
+	0x39, 0xee, 0x04, 0x59, 0xec, 0x6e, 0x47, 0xb1, 0x3c, 0x2f, 0xa6, 0x7e, 0xc8, 0xd3, 0x9d, 0x88,
+	0x47, 0x7c, 0x47, 0xe7, 0xa6, 0xc5, 0x99, 0x8e, 0x74, 0xa0, 0xbf, 0x8c, 0xc6, 0xdd, 0x8a, 0x38,
+	0x8f, 0x12, 0x3a, 0x67, 0xc9, 0x38, 0xa5, 0xb9, 0x0c, 0xd2, 0xcc, 0x10, 0xbc, 0xbb, 0xb0, 0xb9,
+	0xcf, 0xd9, 0x59, 0x1c, 0x15, 0x22, 0x90, 0x31, 0x67, 0x84, 0xbe, 0x2f, 0x68, 0x2e, 0xbd, 0x2f,
+	0x08, 0xee, 0x2c, 0x24, 0xf2, 0x8c, 0xb3, 0x9c, 0xe2, 0x63, 0x58, 0x0b, 0xeb, 0x09, 0x07, 0x0d,
+	0x3a, 0x43, 0x7b, 0xb4, 0xed, 0xab, 0x4e, 0x6f, 0x95, 0x34, 0xd1, 0x17, 0x4c, 0x8a, 0x4b, 0xd2,
+	0xac, 0xe1, 0x1e, 0x01, 0xbe, 0x49, 0xc2, 0x1b, 0xd0, 0x99, 0xd1, 0x4b, 0x07, 0x0d, 0xd0, 0xd0,
+	0x22, 0xea, 0x13, 0xdf, 0x87, 0xee, 0x45, 0x90, 0x14, 0xd4, 0x69, 0x0f, 0xd0, 0xd0, 0x1e, 0xd9,
+	0xfa, 0x50, 0x42, 0xc3, 0x38, 0xa3, 0xc4, 0x64, 0x9e, 0xb5, 0x9f, 0x22, 0xef, 0x04, 0xec, 0x57,
+	0x7c, 0x7a, 0xdd, 0xf2, 0x03, 0xe8, 0x09, 0xcd, 0xd1, 0xa5, 0x16, 0x64, 0x65, 0x0a, 0x0f, 0xa0,
+	0x3b, 0x2d, 0xe2, 0xe4, 0xb4, 0x2c, 0x0d, 0x9a, 0x33, 0x56, 0x08, 0x31, 0x09, 0xef, 0x07, 0x02,
+	0xd0, 0x65, 0xf5, 0x8a, 0xf0, 0xa3, 0x4a, 0x60, 0x8a, 0xfe, 0x5f, 0x13, 0x18, 0xc6, 0xa4, 0x55,
+	0x2a, 0xb1, 0x0f, 0xd6, 0x8c, 0xd2, 0x6c, 0x2f, 0x89, 0x2f, 0xaa, 0xd6, 0xd7, 0x35, 0xfd, 0x75,
+	0x85, 0x4e, 0x5a, 0x64, 0x4e, 0xc1, 0x4f, 0x60, 0x3d, 0x0d, 0xc4, 0xec, 0x90, 0xbd, 0x15, 0x3c,
+	0x12, 0x34, 0xcf, 0x9d, 0xce, 0x62, 0x53, 0x93, 0x16, 0x59, 0xe0, 0xe0, 0x5d, 0x58, 0x55, 0xc8,
+	0x3e, 0x4f, 0xb3, 0x84, 0x4a, 0xea, 0x2c, 0xdd, 0xa2, 0x69, 0x30, 0xc6, 0x16, 0x2c, 0x87, 0x3c,
+	0x4d, 0x03, 0x76, 0xea, 0x8d, 0x60, 0xb5, 0xde, 0x3b, 0xf6, 0x60, 0x55, 0xd0, 0x8c, 0xbf, 0x2c,
+	0x92, 0xe4, 0x4d, 0x90, 0xd2, 0xf2, 0x12, 0x1a, 0x98, 0x67, 0x83, 0x75, 0x3d, 0x80, 0xf7, 0x15,
+	0x41, 0x8f, 0x54, 0xab, 0xb4, 0x43, 0xce, 0xc2, 0x42, 0x08, 0xca, 0x42, 0x73, 0x7f, 0x1d, 0x52,
+	0x87, 0xf0, 0x26, 0x74, 0xc3, 0x84, 0x33, 0xb3, 0x0c, 0x8b, 0x98, 0x40, 0x9d, 0x99, 0x27, 0x41,
+	0x38, 0x7b, 0x47, 0xa7, 0xe7, 0x9c, 0xcf, 0xf4, 0xd0, 0x16, 0x69, 0x60, 0x8a, 0x63, 0x2c, 0x70,
+	0x4c, 0x43, 0x41, 0xa5, 0x1e, 0xd2, 0x22, 0x0d, 0x4c, 0x9d, 0x4f, 0xd9, 0x45, 0x2c, 0x38, 0x4b,
+	0x29, 0x93, 0x4e, 0x57, 0x53, 0xea, 0x10, 0x76, 0x61, 0xa5, 0x1c, 0x3c, 0x77, 0x7a, 0x3a, 0x7d,
+	0x1d, 0x7b, 0x9f, 0xdb, 0xd0, 0xd5, 0xab, 0xc0, 0xeb, 0xd0, 0x3e, 0x3c, 0x28, 0xdb, 0x6f, 0x1f,
+	0x1e, 0xdc, 0xd8, 0x49, 0xfb, 0xe6, 0x4e, 0x70, 0x1f, 0x40, 0x55, 0x8a, 0xe5, 0x24, 0xc8, 0xcf,
+	0xcb, 0x09, 0x6a, 0x08, 0x7e, 0xa8, 0xec, 0xa3, 0xa2, 0x23, 0x9a, 0xe7, 0x41, 0x44, 0xcb, 0x01,
+	0x9a, 0x20, 0x7e, 0x0e, 0x56, 0x2e, 0x03, 0x21, 0xe9, 0xe9, 0x9e, 0xe9, 0xdf, 0x1e, 0xb9, 0xbe,
+	0xf1, 0xb2, 0x5f, 0x79, 0xd9, 0x3f, 0xa9, 0xbc, 0x3c, 0x5e, 0xfa, 0xf8, 0x73, 0x0b, 0x91, 0xb9,
+	0x04, 0x3b, 0xb0, 0x9c, 0x17, 0x61, 0xa8, 0x5e, 0x8e, 0x1a, 0x6f, 0x85, 0x54, 0xa1, 0xf2, 0x54,
+	0xc2, 0x23, 0x67, 0xd9, 0x78, 0x2a, 0xe1, 0x11, 0x1e, 0xab, 0xdb, 0x32, 0x0f, 0x42, 0x9d, 0xb6,
+	0xf2, 0x8f, 0xa7, 0xd5, 0x45, 0xa3, 0x0f, 0xea, 0xf2, 0x0b, 0xc6, 0xa8, 0xc0, 0x13, 0x58, 0x6b,
+	0x58, 0x19, 0xdf, 0xbb, 0xed, 0xcf, 0xa0, 0x1f, 0x99, 0xeb, 0xfe, 0xfd, 0xa7, 0xe1, 0xb5, 0xb0,
+	0x0f, 0x1d, 0x52, 0x30, 0xfc, 0x9f, 0x26, 0xcd, 0x8d, 0xe7, 0x6e, 0xcc, 0x81, 0x8a, 0x3b, 0x44,
+	0xbb, 0x68, 0xbc, 0xf1, 0xed, 0xaa, 0x8f, 0xbe, 0x5f, 0xf5, 0xd1, 0xaf, 0xab, 0x3e, 0xfa, 0xf4,
+	0xbb, 0xdf, 0x9a, 0xf6, 0x74, 0xf7, 0x8f, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0x5a, 0x09, 0xb4,
+	0x74, 0x46, 0x05, 0x00, 0x00,
 }

@@ -6,7 +6,14 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
 service Runner {
+    rpc Configuration(ConfigurationRequest) returns (ConfigurationResponse) {}
     rpc Run(stream JobRequest) returns (stream JobResponse) {}
+}
+
+message ConfigurationRequest {}
+
+message ConfigurationResponse {
+	map<string, Recipe> configuration = 1;
 }
 
 message JobResponse {
