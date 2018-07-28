@@ -20,6 +20,7 @@ type Coordinator struct {
 	buildDAO      *models.BuildDAO
 	in            chan *models.Build
 	out           mappedChans
+	retry         mappedChans
 	ctx           context.Context
 	cancel        context.CancelFunc
 
@@ -123,16 +124,23 @@ func isValidSecret(sig string, secret, body []byte) bool {
 	return hmac.Equal(signedBody, actual)
 }
 
-// Next returns the next job in the pipe. If nil, the client must stop reading.
+// Next returns a job pipe.
 func (c *Coordinator) Next(repoFullName string) <-chan *models.Build {
-	return c.out.ch(repoFullName)
+	ch := make(chan *models.Build, 1)
+	go func() {
+		select {
+		case retry := <-c.retry.ch(repoFullName):
+			ch <- retry
+		case build := <-c.out.ch(repoFullName):
+			ch <- build
+		}
+	}()
+	return ch
 }
 
 // Recover re-enqueues the build request upon failure
 func (c *Coordinator) Recover(repoFullName string, build *models.Build) {
-	// TODO: put the build at the head, not the tail of the queue.
-	// Obviously, do it when replacing channels with proper queues.
-	c.out.ch(repoFullName) <- build
+	c.retry.ch(repoFullName) <- build
 }
 
 // MarkInProgress determines a build has started and update its build
