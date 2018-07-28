@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package cli implements the command line interface primitives used by
-// cmd/sdci.
+// cmd/cci.
 package cli // import "cirello.io/cci/pkg/ui/cli"
 
 import (

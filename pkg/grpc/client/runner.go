@@ -51,7 +51,7 @@ func run(ctx context.Context, recipe *api.Recipe, repoDir, baseDir string) (stri
 	cmd := exec.CommandContext(ctx, "/bin/sh", tmpfile.Name())
 	cmd.Dir = repoDir
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, fmt.Sprintf("SDCI_BUILD_BASE_DIRECTORY=%s", baseDir))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("CCI_BUILD_BASE_DIRECTORY=%s", baseDir))
 	recipeEnvVars := strings.Split(recipe.Environment, "\n")
 	for _, v := range recipeEnvVars {
 		cmd.Env = append(cmd.Env, os.Expand(v, expandVar(cmd.Env)))
