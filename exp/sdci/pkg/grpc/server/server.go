@@ -126,7 +126,6 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 			if err := s.dispatchBuild(srv, repoName, lockIndex, lockSeq, build); err != nil {
 				cancel()
 				log.Println("cannot dispatch build:", err)
-				s.coord.Recover(repoName, build)
 				return err
 			}
 		}
