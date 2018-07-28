@@ -1,4 +1,4 @@
-package worker // import "cirello.io/exp/sdci/pkg/worker"
+package client
 
 import (
 	"context"

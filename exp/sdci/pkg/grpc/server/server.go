@@ -1,6 +1,7 @@
 // Package server implements the server-side GRPC interface of the coordinator
 // and workers.
 package server // import "cirello.io/exp/sdci/pkg/grpc/server"
+
 import (
 	"context"
 	"fmt"
@@ -14,26 +15,27 @@ import (
 	"cirello.io/exp/sdci/pkg/models"
 )
 
-// Server interprets worker calls to coordinator
+// Server interprets worker calls to coordinator.
 type Server struct {
-	configuration models.Configuration
 	coord         *coordinator.Coordinator
+	configuration models.Configuration
 
-	locks       sync.Map // map of repoNames+workerID to lock state
 	lockRefresh *sync.Cond
+	locks       map[string]*lock // map of repoNames+workerID to lock state
 }
 
-// New instantiates a new server
-func New(configuration models.Configuration, coord *coordinator.Coordinator) *Server {
+// New instantiates a new server.
+func New(coord *coordinator.Coordinator, configuration models.Configuration) *Server {
 	s := &Server{
-		configuration: configuration,
 		coord:         coord,
+		configuration: configuration,
 		lockRefresh:   sync.NewCond(&sync.Mutex{}),
+		locks:         make(map[string]*lock),
 	}
 	for repoName, recipe := range configuration {
 		for i := 0; i < int(recipe.Concurrency); i++ {
 			lockName := fmt.Sprintf("%v-%v", repoName, i)
-			s.locks.Store(lockName, &lock{})
+			s.locks[lockName] = &lock{}
 		}
 	}
 	go s.expireLocks()
@@ -60,7 +62,6 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 	}
 
 	repoName := buildReq.GetRepoFullName()
-	_ = repoName
 
 	lockIndex, lockSeq, err := s.waitForLock(repoName)
 	if err != nil {
@@ -71,6 +72,20 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 	defer cancel()
 
 	go func() {
+		t := time.Tick(1 * time.Second)
+		for {
+			select {
+			case <-srv.Context().Done():
+				return
+			case <-t:
+				if !s.isLockOwner(lockIndex, lockSeq) {
+					cancel()
+				}
+			}
+		}
+	}()
+	go func() {
+		defer cancel()
 		for {
 			req, err := srv.Recv()
 			if err != nil {
@@ -79,11 +94,26 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 				return
 			}
 			switch req.GetCommand().(type) {
+			case *api.JobRequest_MarkInProgress:
+				build := req.GetMarkInProgress()
+				err := s.coord.MarkInProgress(&models.Build{
+					Build: build,
+				})
+				if err != nil {
+					log.Println("cannot mark build", build.ID, "as in progress:", err)
+				}
+			case *api.JobRequest_MarkComplete:
+				build := req.GetMarkComplete()
+				err := s.coord.MarkComplete(&models.Build{
+					Build: build,
+				})
+				if err != nil {
+					log.Println("cannot mark build", build.ID, "as complete:", err)
+				}
 			case *api.JobRequest_KeepAlive:
 				if err := s.refreshLock(lockIndex, lockSeq); err != nil {
 					err := errors.E(err, "lost lock")
 					log.Println(err)
-					cancel()
 					return
 				}
 			}
@@ -91,14 +121,15 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 	}()
 
 	for {
+		log.Println("GRPC server dispatching for", repoName)
 		select {
 		case <-ctx.Done():
 			return nil
-
 		case build := <-s.coord.Next(repoName):
 			if err := s.dispatchBuild(srv, repoName, lockIndex, lockSeq, build); err != nil {
 				cancel()
 				s.coord.Recover(repoName, build)
+				log.Println("cannot dispatch build:", err)
 				return err
 			}
 		}
@@ -117,56 +148,9 @@ func (s *Server) dispatchBuild(srv api.Runner_RunServer, repoName, lockIndex str
 	return errors.E(err, "cannot dispatch build to client")
 }
 
-type lock struct {
-	mu         sync.Mutex
-	locked     bool
-	seq        int
-	lastUpdate time.Time
-}
-
-func (l *lock) tryLock() (int, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if l.locked {
-		return 0, errors.E("already locked")
-	}
-	l.locked = true
-	l.seq++
-	l.lastUpdate = time.Now()
-	return l.seq, nil
-}
-
-func (l *lock) refresh(seq int) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if l.seq == seq {
-		l.lastUpdate = time.Now()
-	}
-}
-
-func (l *lock) release(seq int) error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if !l.locked {
-		return errors.E("already unlocked")
-	}
-	if l.seq != seq {
-		return errors.E("not current lock owner")
-	}
-	l.locked = false
-	return nil
-}
-
-func (l *lock) expire(ttl time.Duration) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if time.Since(l.lastUpdate) > ttl {
-		l.locked = false
-		l.seq++
-	}
-}
-
 func (s *Server) waitForLock(repoName string) (lockName string, seq int, err error) {
+	s.lockRefresh.L.Lock()
+	defer s.lockRefresh.L.Unlock()
 	// TODO: implement using lock server
 	cfg, ok := s.configuration[repoName]
 	if !ok {
@@ -175,13 +159,14 @@ func (s *Server) waitForLock(repoName string) (lockName string, seq int, err err
 	for {
 		for i := 0; i < int(cfg.Concurrency); i++ {
 			lockName := fmt.Sprintf("%v-%v", repoName, i)
-			v, ok := s.locks.Load(lockName)
+			l, ok := s.locks[lockName]
 			if !ok {
+				log.Println("lockName not found", lockName)
 				return "", -1, errors.Errorf("cannot find lock for %s", lockName)
 			}
-			l := v.(*lock)
 			seq, err := l.tryLock()
 			if err != nil {
+				log.Println("tryLock:", err)
 				continue
 			}
 			return lockName, seq, nil
@@ -192,26 +177,42 @@ func (s *Server) waitForLock(repoName string) (lockName string, seq int, err err
 }
 
 func (s *Server) expireLocks() {
-	const ttl = 5 * time.Minute
+	const ttl = 1 * time.Minute
 	t := time.Tick(time.Second)
 	for range t {
-		s.locks.Range(func(k, v interface{}) bool {
-			l := v.(*lock)
-			l.expire(ttl)
-			return true
-		})
+		s.lockRefresh.L.Lock()
+		for lockName, l := range s.locks {
+			if l.expire(ttl) {
+				log.Println(lockName, "expired")
+			}
+		}
+		s.lockRefresh.Broadcast()
+		s.lockRefresh.L.Unlock()
 	}
 }
 
 func (s *Server) refreshLock(lockName string, seq int) error {
-	v, ok := s.locks.Load(lockName)
+	s.lockRefresh.L.Lock()
+	defer s.lockRefresh.L.Unlock()
+	defer s.lockRefresh.Broadcast()
+	l, ok := s.locks[lockName]
 	if !ok {
 		return errors.Errorf("cannot find lock for %s", lockName)
 	}
-	l := v.(*lock)
 	if l.seq != seq {
 		return errors.E("not current lock owner")
 	}
 	l.refresh(seq)
 	return nil
+}
+
+func (s *Server) isLockOwner(lockName string, seq int) bool {
+	s.lockRefresh.L.Lock()
+	defer s.lockRefresh.L.Unlock()
+	defer s.lockRefresh.Broadcast()
+	l, ok := s.locks[lockName]
+	if !ok {
+		return false
+	}
+	return l.seq == seq
 }
