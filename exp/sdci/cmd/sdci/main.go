@@ -31,7 +31,7 @@ func main() {
 	startDashboard(ctx, db)
 	log.Println("ok")
 	addr := startGRPCServer(ctx, coord, configuration)
-	startWorkers(ctx, addr, buildsDir, coord, configuration)
+	startWorkers(ctx, addr, buildsDir, coord)
 	if err := coord.Wait(); err != nil {
 		log.Fatalln("coordinator error:", err)
 	}
@@ -74,8 +74,8 @@ func startCoordinator(db *sqlx.DB, configuration models.Configuration) (context.
 }
 
 func startWorkers(ctx context.Context, grpcServerAddr, buildsDir string,
-	coord *coordinator.Coordinator, configuration models.Configuration) {
-	err := worker.Start(ctx, grpcServerAddr, buildsDir, configuration)
+	coord *coordinator.Coordinator) {
+	err := worker.Start(ctx, grpcServerAddr, buildsDir)
 	if err != nil {
 		log.Fatalln("coordinator error on start:", err)
 	}

@@ -7,28 +7,29 @@ import (
 	"os"
 
 	"cirello.io/errors"
+	"cirello.io/exp/sdci/pkg/grpc/api"
 	"cirello.io/exp/sdci/pkg/grpc/client"
-	"cirello.io/exp/sdci/pkg/models"
 	"google.golang.org/grpc"
 )
 
 // Start the builders.
-func Start(ctx context.Context, grpcServerAddr, buildsDir string, configuration models.Configuration) error {
-	for repoFullName, recipe := range configuration {
+func Start(ctx context.Context, grpcServerAddr, buildsDir string) error {
+	cc, err := grpc.Dial(grpcServerAddr, grpc.WithInsecure())
+	if err != nil {
+		return errors.E(err, "cannot dial to GRPC server")
+	}
+	cl := api.NewRunnerClient(cc)
+	resp, err := cl.Configuration(context.Background(), &api.ConfigurationRequest{})
+	if err != nil {
+		return errors.E(err, "cannot load configuration")
+	}
+	for repoFullName, recipe := range resp.Configuration {
 		total := int(recipe.Concurrency)
-		if total == 0 {
-			total = 1
-		}
-		// TODO: handle reconnects.
 		for i := 0; i < total; i++ {
 			buildsDir := fmt.Sprintf(buildsDir, i)
 			if err := os.MkdirAll(buildsDir,
 				os.ModePerm&0700); err != nil {
 				return errors.E(err, "cannot create .sdci build directory")
-			}
-			cc, err := grpc.Dial(grpcServerAddr, grpc.WithInsecure())
-			if err != nil {
-				return errors.E(err, "cannot dial to GRPC server")
 			}
 			go worker(ctx, cc, buildsDir, repoFullName, i)
 		}
