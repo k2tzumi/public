@@ -42,6 +42,17 @@ func New(coord *coordinator.Coordinator, configuration models.Configuration) *Se
 	return s
 }
 
+// Configuration allows for server-side initiated worker configuration.
+func (s *Server) Configuration(ctx context.Context, _ *api.ConfigurationRequest) (*api.ConfigurationResponse, error) {
+	resp := &api.ConfigurationResponse{
+		Configuration: make(map[string]*api.Recipe),
+	}
+	for k, v := range s.configuration {
+		resp.Configuration[k] = &v
+	}
+	return resp, nil
+}
+
 // Run coordinates both the delivery of build job to workers and their actual
 // liveness.
 func (s *Server) Run(srv api.Runner_RunServer) error {
