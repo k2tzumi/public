@@ -1,4 +1,7 @@
+// Package coordinator takes care of coordination of intaking and distribution
+// of tasks to agents.
 package coordinator // import "cirello.io/exp/sdci/pkg/coordinator"
+
 import (
 	"context"
 	"crypto/hmac"
@@ -12,6 +15,7 @@ import (
 
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/grpc/api"
+	"cirello.io/exp/sdci/pkg/infra/repositories"
 	"cirello.io/exp/sdci/pkg/models"
 	"github.com/jmoiron/sqlx"
 )
@@ -19,7 +23,7 @@ import (
 // Coordinator takes and dispatches build requests.
 type Coordinator struct {
 	configuration models.Configuration
-	buildDAO      *models.BuildDAO
+	buildDAO      models.BuildRepository
 	in            chan *models.Build
 	out           mappedChans
 	ctx           context.Context
@@ -34,7 +38,7 @@ func New(db *sqlx.DB, configuration models.Configuration) (context.Context, *Coo
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &Coordinator{
 		configuration: configuration,
-		buildDAO:      models.NewBuildDAO(db),
+		buildDAO:      repositories.Builds(db),
 		in:            make(chan *models.Build, 10),
 		ctx:           ctx,
 		cancel:        cancel,

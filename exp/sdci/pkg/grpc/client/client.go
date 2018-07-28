@@ -6,19 +6,16 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"cirello.io/errors"
-	"cirello.io/exp/sdci/pkg/git"
 	"cirello.io/exp/sdci/pkg/grpc/api"
+	"cirello.io/exp/sdci/pkg/infra/git"
+	"cirello.io/exp/sdci/pkg/infra/slack"
 	"google.golang.org/grpc"
 )
 
@@ -136,7 +133,7 @@ func (c *Client) build(ctx context.Context, cl api.Runner_RunClient, buildsDir s
 	slackMessages := []string{msg}
 	slackMessages = append(slackMessages, splitMsg(output, "```")...)
 	for _, msg := range slackMessages {
-		if err := slackSend(job.Recipe.SlackWebhook, msg); err != nil {
+		if err := slack.Send(job.Recipe.SlackWebhook, msg); err != nil {
 			log.Println(repoFullName, "cannot send slack message:", err)
 		}
 	}
@@ -163,22 +160,4 @@ func splitMsg(msg, split string) []string {
 		msgs = append(msgs, split+"\n"+buf.String()+"\n"+split)
 	}
 	return msgs
-}
-
-func slackSend(webhookURL string, msg string) error {
-	var payload bytes.Buffer
-	err := json.NewEncoder(&payload).Encode(struct {
-		Text string `json:"text"`
-	}{Text: msg})
-	if err != nil {
-		return errors.E(err, "cannot encode slack message")
-	}
-	response, err := http.Post(webhookURL, "application/json", &payload)
-	if err != nil {
-		return errors.E(err, "cannot send slack message")
-	}
-	if _, err := io.Copy(ioutil.Discard, response.Body); err != nil {
-		return errors.E(err, "cannot drain response body")
-	}
-	return nil
 }

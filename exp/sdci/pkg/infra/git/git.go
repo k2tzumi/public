@@ -1,4 +1,6 @@
-package git // import "cirello.io/exp/sdci/pkg/git"
+// Package git is wrapper to $PATH/bin.
+package git // import "cirello.io/exp/sdci/pkg/infra/git"
+
 import (
 	"context"
 	"log"
