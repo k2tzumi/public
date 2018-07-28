@@ -4,6 +4,7 @@ package api;
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 
 service Runner {
     rpc Configuration(ConfigurationRequest) returns (ConfigurationResponse) {}
@@ -44,6 +45,7 @@ message Recipe {
 	string githubSecret = 4;
 	string environment = 5;
 	string commands = 6;
+	google.protobuf.Duration timeout = 7 [(gogoproto.stdduration) = true];
 }
 
 message Build {

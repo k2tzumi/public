@@ -29,6 +29,11 @@ func run(ctx context.Context, recipe *api.Recipe, repoDir, baseDir string) (stri
 	defer tmpfile.Close()
 	fmt.Fprintf(tmpfile, execScript, recipe.Commands)
 	tmpfile.Close()
+	if recipe.Timeout != nil && *recipe.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *recipe.Timeout)
+		defer cancel()
+	}
 	cmd := exec.CommandContext(ctx, "/bin/sh", tmpfile.Name())
 	cmd.Dir = repoDir
 	cmd.Env = os.Environ()

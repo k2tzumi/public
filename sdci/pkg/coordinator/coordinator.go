@@ -5,8 +5,10 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"encoding/hex"
+	"log"
 	"strings"
 	"sync"
+	"time"
 
 	"cirello.io/errors"
 	"cirello.io/exp/sdci/pkg/grpc/api"
@@ -39,6 +41,7 @@ func New(db *sqlx.DB, configuration models.Configuration) (context.Context, *Coo
 	}
 	c.bootstrap()
 	go c.forward()
+	go c.monitorTimeouts()
 	return ctx, c
 }
 
@@ -76,6 +79,28 @@ func (c *Coordinator) forward() {
 			return
 		}
 		c.out.ch(build.RepoFullName) <- build
+	}
+}
+
+func (c *Coordinator) monitorTimeouts() {
+	if c.err != nil {
+		return
+	}
+
+	for range time.Tick(time.Second) {
+		for k, cfg := range c.configuration {
+			if cfg.Timeout == nil || *cfg.Timeout == 0 {
+				continue
+			}
+			rows, err := c.buildDAO.SweepExpired(*cfg.Timeout)
+			if err != nil {
+				log.Println("cannot verify expired builds for",
+					k, ":", err)
+			}
+			if rows > 0 {
+				log.Println(rows, "builds expired for", k)
+			}
+		}
 	}
 }
 

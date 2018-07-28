@@ -121,7 +121,7 @@ func (b *BuildDAO) MarkComplete(build *Build) error {
 			success = :success,
 			log = :log,
 			completed_at = :completed_at
-		WHERE id = :id
+		WHERE id = :id AND completed_at = ''
 	`, build)
 	return errors.E(err, "cannot mark build to complete")
 }
@@ -169,4 +169,28 @@ func (b *BuildDAO) ListByRepoFullName(repoFullName string) ([]*Build, error) {
 		ORDER BY started_at DESC
 	`, repoFullName)
 	return builds, errors.E(err, "cannot load builds for repository")
+}
+
+// SweepExpired mark expired builds as failed.
+func (b *BuildDAO) SweepExpired(timeout time.Duration) (int64, error) {
+	now := time.Now()
+	resp, err := b.db.Exec(`
+		UPDATE builds
+		SET
+			success = 0,
+			completed_at = $1,
+			log = 'timeout'
+		WHERE
+			started_at < $2 AND
+			completed_at = '' AND
+			success = 0
+	`, now, now.Add(-timeout))
+	if err != nil {
+		return 0, errors.E(err, "cannot mark build to complete")
+	}
+	rows, err := resp.RowsAffected()
+	if err != nil {
+		return 0, errors.E(err, "cannot count rows affected")
+	}
+	return rows, nil
 }

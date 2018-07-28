@@ -111,7 +111,7 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 					build := req.GetMarkInProgress()
 					err := s.markInProgress(build, lockIndex, lockSeq)
 					if err != nil {
-						err := errors.Wrapf(err, "cannot mark build", build.ID, "as in progress")
+						err := errors.Wrapf(err, "cannot mark build %d as in progress", build.ID)
 						log.Println(err)
 						return
 					}
@@ -119,7 +119,7 @@ func (s *Server) Run(srv api.Runner_RunServer) error {
 					build := req.GetMarkComplete()
 					err := s.markComplete(build, lockIndex, lockSeq)
 					if err != nil {
-						err := errors.Wrapf(err, "cannot mark build", build.ID, "as completed")
+						err := errors.Wrapf(err, "cannot mark build %d as completed", build.ID)
 						log.Println(err)
 						return
 					}
