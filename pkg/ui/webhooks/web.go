@@ -77,7 +77,8 @@ func (s *Server) ServeContext(ctx context.Context, l net.Listener) error {
 	})
 	mux.HandleFunc("/badge/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/svg+xml;charset=utf-8")
-		repoFullName := strings.TrimPrefix(r.RequestURI, "/badge/")
+		w.Header().Set("Expires", time.Now().Add(5*time.Minute).Format(time.RFC1123))
+		repoFullName := strings.TrimPrefix(r.URL.Path, "/badge/")
 		status := s.coordinator.GetLastBuildStatus(repoFullName)
 		badge := badgeUnknown
 		switch status {
