@@ -1,5 +1,0 @@
-language: go
-sudo: false
-go_import_path: cirello.io/cci
-go:
-  - "1.x"
