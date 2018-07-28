@@ -141,7 +141,7 @@ func (c *Coordinator) Enqueue(repoFullName, commitHash, commitMessage,
 	}
 	recipe, ok := c.configuration[b.RepoFullName]
 	if !ok {
-		return errors.Errorf("cannot find recipe for", b.RepoFullName)
+		return errors.Errorf("cannot find recipe for %s", b.RepoFullName)
 	}
 	if recipe.GithubSecret != "" &&
 		!isValidSecret(sig, []byte(recipe.GithubSecret), body) {
