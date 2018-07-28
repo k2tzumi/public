@@ -1,0 +1,3 @@
+test:
+	go get -u golang.org/x/vgo
+	vgo test -v ./...
