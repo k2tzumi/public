@@ -8,7 +8,7 @@ This service-level agreement (SLA) describes the level of support that you shoul
 Uptime
 ------
 
--	**95%+ uptime**
+-	**[95%+ uptime](https://uptime.is/95)**
 
 	If the packages have tests enabled, then the packages will build successfully, and have their tests pass at least 95% of the time in a year.
 
