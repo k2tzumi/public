@@ -114,8 +114,9 @@ func (c *Client) markComplete(cl api.Runner_RunClient, job *api.JobResponse) err
 
 func (c *Client) build(ctx context.Context, cl api.Runner_RunClient, buildsDir string, job *api.JobResponse) {
 	repoFullName := job.Build.RepoFullName
-	commitHash := job.Build.CommitHash
-	commitMessage := job.Build.CommitMessage
+	dir, name := filepath.Split(repoFullName)
+	baseDir := filepath.Join(buildsDir, repoFullName)
+	repoDir := filepath.Join(baseDir, "src", "github.com", dir, name)
 	if err := c.markInProgress(cl, job); err != nil {
 		log.Println(repoFullName, "cannot mark job as in-progress:", err)
 		return
@@ -125,11 +126,9 @@ func (c *Client) build(ctx context.Context, cl api.Runner_RunClient, buildsDir s
 			log.Println(repoFullName, "cannot mark job as completed:", err)
 		}
 	}()
+	slackStart(job)
 	log.Println(repoFullName, "checking out code...")
-	dir, name := filepath.Split(repoFullName)
-	baseDir := filepath.Join(buildsDir, repoFullName)
-	repoDir := filepath.Join(baseDir, "src", "github.com", dir, name)
-	if err := git.Checkout(ctx, job.Recipe.Clone, repoDir, commitHash); err != nil {
+	if err := git.Checkout(ctx, job.Recipe.Clone, repoDir, job.Build.CommitHash); err != nil {
 		log.Println(repoFullName, "cannot checkout code:", err)
 		return
 	}
@@ -138,11 +137,26 @@ func (c *Client) build(ctx context.Context, cl api.Runner_RunClient, buildsDir s
 	job.Build.Success = err == nil
 	job.Build.Log = output
 	log.Println(repoFullName, "building result:", err)
+	slackEnd(job, output, err)
+}
+
+func slackStart(job *api.JobResponse) {
+	repoFullName := job.Build.RepoFullName
+	commitHash := job.Build.CommitHash
 	msg := fmt.Sprintln("build", job.Build.ID, "for", repoFullName,
-		"commit:`", commitMessage, "`",
+		"("+commitHash+")", "started")
+	if err := slack.Send(job.Recipe.SlackWebhook, msg); err != nil {
+		log.Println(repoFullName, "cannot send slack message:", err)
+	}
+}
+
+func slackEnd(job *api.JobResponse, output string, err error) {
+	repoFullName := job.Build.RepoFullName
+	commitHash := job.Build.CommitHash
+	msg := fmt.Sprintln("build", job.Build.ID, "for", repoFullName,
 		"("+commitHash+")", "done")
 	if err != nil {
-		msg = fmt.Sprint("-  errored with:", err)
+		msg = fmt.Sprint(msg, "-  errored with:", err)
 	}
 	slackMessages := []string{msg}
 	slackMessages = append(slackMessages, splitMsg(output, "```")...)
