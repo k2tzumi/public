@@ -32,24 +32,13 @@ func Run(db *sqlx.DB) {
 	app.Name = "bookmarkd"
 	app.Usage = "bookmark manager"
 	app.Version = "0.0.1"
-
-	app.Commands = []cli.Command{
-		standaloneCmd(db),
+	app.Action = func(ctx *cli.Context) error {
+		return standalone(db)
 	}
 	sort.Slice(app.Commands, func(i, j int) bool {
 		return strings.Compare(app.Commands[i].Name, app.Commands[j].Name) < 0
 	})
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func standaloneCmd(db *sqlx.DB) cli.Command {
-	return cli.Command{
-		Name:        "standalone",
-		Description: "start service in standalone mode",
-		Action: func(ctx *cli.Context) error {
-			return standalone(db)
-		},
 	}
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package worker
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"cirello.io/cci/pkg/grpc/api"
+	"cirello.io/cci/pkg/models"
 	"cirello.io/errors"
 )
 
@@ -34,7 +34,7 @@ set -e
 %s
 `
 
-func run(ctx context.Context, recipe *api.Recipe, repoDir, baseDir string) (string, error) {
+func run(ctx context.Context, recipe *models.Recipe, repoDir, baseDir string) (string, error) {
 	tmpfile, err := ioutil.TempFile(repoDir, "agent")
 	if err != nil {
 		return "", errors.E(errors.FailedPrecondition, err,

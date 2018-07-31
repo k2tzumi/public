@@ -23,8 +23,6 @@ import (
 	"sync"
 
 	"cirello.io/cci/pkg/coordinator"
-	"cirello.io/cci/pkg/grpc/api"
-	"cirello.io/cci/pkg/grpc/server"
 	"cirello.io/cci/pkg/infra/repositories"
 	"cirello.io/cci/pkg/models"
 	"cirello.io/cci/pkg/ui/dashboard"
@@ -32,7 +30,6 @@ import (
 	"cirello.io/cci/pkg/worker"
 	"cirello.io/errors"
 	"github.com/jmoiron/sqlx"
-	"google.golang.org/grpc"
 )
 
 type standaloneMode struct {
@@ -49,8 +46,7 @@ func standalone(db *sqlx.DB) error {
 	ctx, coord := m.startCoordinator(db, configuration)
 	m.startWebhooksServer(ctx, coord)
 	m.startDashboard(ctx, db)
-	addr := m.startGRPCServer(ctx, coord, configuration)
-	m.startWorkers(ctx, addr, buildsDir, coord)
+	m.startWorkers(ctx, buildsDir, configuration, coord)
 	if err := coord.Wait(); err != nil {
 		m.setError(err)
 	}
@@ -98,9 +94,9 @@ func (m *standaloneMode) startCoordinator(db *sqlx.DB, configuration models.Conf
 	return ctx, coord
 }
 
-func (m *standaloneMode) startWorkers(ctx context.Context, grpcServerAddr, buildsDir string,
-	coord *coordinator.Coordinator) {
-	err := worker.Start(ctx, grpcServerAddr, buildsDir)
+func (m *standaloneMode) startWorkers(ctx context.Context, buildsDir string,
+	configuration models.Configuration, coord *coordinator.Coordinator) {
+	err := worker.Start(ctx, buildsDir, configuration, coord)
 	m.setError(errors.E(err, "coordinator error on start"))
 }
 
@@ -128,20 +124,4 @@ func (m *standaloneMode) startDashboard(ctx context.Context, db *sqlx.DB) {
 		err := dashboardServer.ServeContext(ctx, dashboardListener)
 		m.setError(errors.E(err, "cannot server dashboard"))
 	}()
-}
-
-func (m *standaloneMode) startGRPCServer(ctx context.Context, coord *coordinator.Coordinator, configuration models.Configuration) string {
-	l, err := net.Listen("tcp", ":0")
-	if err != nil {
-		m.setError(errors.E(err, "cannot start dashboard server"))
-		return ""
-	}
-	s := server.New(coord, configuration)
-	grpcServer := grpc.NewServer()
-	api.RegisterRunnerServer(grpcServer, s)
-	go func() {
-		err := grpcServer.Serve(l)
-		m.setError(errors.E(err, "errors in GRPC server"))
-	}()
-	return l.Addr().String()
 }

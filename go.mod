@@ -1,7 +1,7 @@
 module cirello.io/cci
 
 require (
-	cirello.io/errors v0.0.0-20180728155923-c32b40ccf382 // indirect
+	cirello.io/errors v0.0.0-20180728155923-c32b40ccf382
 	github.com/gogo/protobuf v1.1.1
 	github.com/golang/protobuf v1.1.0
 	github.com/jmoiron/sqlx v0.0.0-20180614180643-0dae4fefe7c0

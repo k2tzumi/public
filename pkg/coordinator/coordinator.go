@@ -27,7 +27,6 @@ import (
 	"sync"
 	"time"
 
-	"cirello.io/cci/pkg/grpc/api"
 	"cirello.io/cci/pkg/infra/repositories"
 	"cirello.io/cci/pkg/models"
 	"cirello.io/errors"
@@ -133,11 +132,9 @@ func (c *Coordinator) Error() error {
 func (c *Coordinator) Enqueue(repoFullName, commitHash, commitMessage,
 	sig string, body []byte) error {
 	b := &models.Build{
-		Build: &api.Build{
-			RepoFullName:  repoFullName,
-			CommitHash:    commitHash,
-			CommitMessage: commitMessage,
-		},
+		RepoFullName:  repoFullName,
+		CommitHash:    commitHash,
+		CommitMessage: commitMessage,
 	}
 	recipe, ok := c.configuration[b.RepoFullName]
 	if !ok {

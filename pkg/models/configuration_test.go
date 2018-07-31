@@ -18,8 +18,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"cirello.io/cci/pkg/grpc/api"
 )
 
 func TestConfigurationParser(t *testing.T) {
@@ -29,7 +27,7 @@ func TestConfigurationParser(t *testing.T) {
 		t.Fatalf("cannot parse configuration: %v", err)
 	}
 	expected := Configuration{
-		"org/account": api.Recipe{
+		"org/account": Recipe{
 			Concurrency:  2,
 			Clone:        "git@github.com:org/account.git",
 			SlackWebhook: "https://hooks.slack.com/services/AAAA/BBB/CCC",
