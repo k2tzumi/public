@@ -16,29 +16,26 @@
 package worker // import "cirello.io/cci/pkg/worker"
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
-	"cirello.io/cci/pkg/grpc/api"
-	"cirello.io/cci/pkg/grpc/client"
+	"cirello.io/cci/pkg/coordinator"
+	"cirello.io/cci/pkg/infra/git"
+	"cirello.io/cci/pkg/infra/slack"
+	"cirello.io/cci/pkg/models"
 	"cirello.io/errors"
-	"google.golang.org/grpc"
 )
 
 // Start the builders.
-func Start(ctx context.Context, grpcServerAddr, buildsDir string) error {
-	cc, err := grpc.Dial(grpcServerAddr, grpc.WithInsecure())
-	if err != nil {
-		return errors.E(err, "cannot dial to GRPC server")
-	}
-	cl := api.NewRunnerClient(cc)
-	resp, err := cl.Configuration(context.Background(), &api.ConfigurationRequest{})
-	if err != nil {
-		return errors.E(err, "cannot load configuration")
-	}
-	for repoFullName, recipe := range resp.Configuration {
+func Start(ctx context.Context, buildsDir string,
+	configuration models.Configuration, coord *coordinator.Coordinator) error {
+	for repoFullName, recipe := range configuration {
 		total := int(recipe.Concurrency)
 		for i := 0; i < total; i++ {
 			buildsDir := fmt.Sprintf(buildsDir, i)
@@ -46,18 +43,101 @@ func Start(ctx context.Context, grpcServerAddr, buildsDir string) error {
 				os.ModePerm&0700); err != nil {
 				return errors.E(err, "cannot create .cci build directory")
 			}
-			go worker(ctx, cc, buildsDir, repoFullName, i)
+			go worker(ctx, buildsDir, repoFullName, coord, i)
 		}
 	}
 	return nil
 }
 
-func worker(ctx context.Context, cc *grpc.ClientConn, buildsDir, repoFullName string, i int) {
-	c := client.New(cc)
-	log.Println("starting worker for", repoFullName, i)
-	defer log.Println("done with ", repoFullName, i)
-	err := c.Run(ctx, buildsDir, repoFullName)
-	if err != nil {
-		log.Println("cannot run worker", repoFullName, i, ":", err)
+func worker(ctx context.Context, buildsDir, repoFullName string, c *coordinator.Coordinator, i int) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case job := <-c.Next(repoFullName):
+			if job == nil {
+				log.Println("no more jobs in the pipe, halting worker")
+				return
+			}
+			build(ctx, buildsDir, c, job)
+		}
 	}
+}
+
+func build(ctx context.Context, buildsDir string, c *coordinator.Coordinator, job *models.Build) {
+	repoFullName := job.RepoFullName
+	dir, name := filepath.Split(repoFullName)
+	baseDir := filepath.Join(buildsDir, repoFullName)
+	repoDir := filepath.Join(baseDir, "src", "github.com", dir, name)
+	if err := c.MarkInProgress(job); err != nil {
+		log.Println(repoFullName, "cannot mark job as in-progress:", err)
+		return
+	}
+	defer func() {
+		if err := c.MarkComplete(job); err != nil {
+			log.Println(repoFullName, "cannot mark job as completed:", err)
+		}
+	}()
+	slackStart(job)
+	log.Println(repoFullName, "checking out code...")
+	if err := git.Checkout(ctx, job.Recipe.Clone, repoDir, job.CommitHash); err != nil {
+		log.Println(repoFullName, "cannot checkout code:", err)
+		return
+	}
+	log.Println(repoFullName, "building...")
+	output, err := run(ctx, job.Recipe, repoDir, baseDir)
+	job.Success = err == nil
+	job.Log = output
+	log.Println(repoFullName, "building result:", err)
+	slackEnd(job, output, err)
+}
+
+func slackStart(job *models.Build) {
+	repoFullName := job.RepoFullName
+	commitHash := job.CommitHash
+	msg := fmt.Sprintln("build", job.ID, "for", repoFullName,
+		"("+commitHash+")", "started")
+	if err := slack.Send(job.Recipe.SlackWebhook, msg); err != nil {
+		log.Println(repoFullName, "cannot send slack message:", err)
+	}
+}
+
+func slackEnd(job *models.Build, output string, err error) {
+	repoFullName := job.RepoFullName
+	commitHash := job.CommitHash
+	msg := fmt.Sprintln("build", job.ID, "for", repoFullName,
+		"("+commitHash+")", "done")
+	if err != nil {
+		msg = fmt.Sprint(msg, "-  errored with:", err)
+	}
+	slackMessages := []string{msg}
+	slackMessages = append(slackMessages, splitMsg(output, "```")...)
+	for _, msg := range slackMessages {
+		if err := slack.Send(job.Recipe.SlackWebhook, msg); err != nil {
+			log.Println(repoFullName, "cannot send slack message:", err)
+		}
+	}
+}
+
+func splitMsg(msg, split string) []string {
+	var msgs []string
+	const maxsize = 2048
+	current := 0
+	r := strings.NewReader(msg)
+	scanner := bufio.NewScanner(r)
+	var buf bytes.Buffer
+	for scanner.Scan() {
+		line := scanner.Text()
+		current += len(line)
+		fmt.Fprintln(&buf, line)
+		if current > maxsize {
+			msgs = append(msgs, split+"\n"+buf.String()+"\n"+split)
+			buf.Reset()
+			current = 0
+		}
+	}
+	if str := buf.String(); str != "" {
+		msgs = append(msgs, split+"\n"+buf.String()+"\n"+split)
+	}
+	return msgs
 }

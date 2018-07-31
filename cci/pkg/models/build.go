@@ -16,14 +16,30 @@ package models
 
 import (
 	"time"
-
-	"cirello.io/cci/pkg/grpc/api"
 )
 
 // Build defines the necessary data to run a build successfully.
 type Build struct {
-	*api.Build
-	*api.Recipe
+	ID            int64      `yaml:"id" db:"id"`
+	RepoFullName  string     `yaml:"repo_full_name" db:"repo_full_name"`
+	CommitHash    string     `yaml:"commit_hash" db:"commit_hash"`
+	CommitMessage string     `yaml:"commit_message" db:"commit_message"`
+	StartedAt     *time.Time `yaml:"started_at" db:"started_at"`
+	Success       bool       `yaml:"success" db:"success"`
+	Log           string     `yaml:"log" db:"log"`
+	CompletedAt   *time.Time `yaml:"completed_at" db:"completed_at"`
+	*Recipe
+}
+
+// Recipe defines the environment necessary to make a build.
+type Recipe struct {
+	Concurrency  int64          `yaml:"concurrency" db:"concurrency"`
+	Clone        string         `yaml:"clone" db:"clone"`
+	SlackWebhook string         `yaml:"slack_webhook" db:"slack_webhook"`
+	GithubSecret string         `yaml:"github_secret" db:"github_secret"`
+	Environment  string         `yaml:"environment" db:"environment"`
+	Commands     string         `yaml:"commands" db:"commands"`
+	Timeout      *time.Duration `yaml:"timeout" db:"timeout"`
 }
 
 // Status define the current build status of a Build

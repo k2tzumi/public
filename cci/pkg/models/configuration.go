@@ -17,13 +17,12 @@ package models
 import (
 	"io"
 
-	"cirello.io/cci/pkg/grpc/api"
 	"cirello.io/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // Configuration defines the internal parameters for the application.
-type Configuration map[string]api.Recipe
+type Configuration map[string]Recipe
 
 // LoadConfiguration loads a given fd with YAML content into Configuration.
 func LoadConfiguration(r io.Reader) (Configuration, error) {

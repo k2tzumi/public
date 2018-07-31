@@ -12,6 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package grpc encapsulates the on-write communication between coordinator and
-// workers.
-package grpc // import "cirello.io/cci/pkg/grpc"
+package worker
+
+import (
+	"context"
+	"testing"
+
+	"cirello.io/cci/pkg/models"
+)
+
+func TestRun(t *testing.T) {
+	recipe := &models.Recipe{
+		Environment: "RECIPE_MSG=world",
+		Commands:    "echo Hello, $RECIPE_MSG;",
+	}
+	response, err := run(context.Background(), recipe, ".", ".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%#v", response)
+	if response != "Hello, world\n" {
+		t.Errorf("unexpected output: %v", response)
+	}
+}

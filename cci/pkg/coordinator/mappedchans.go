@@ -20,7 +20,6 @@ import (
 	"cirello.io/cci/pkg/models"
 )
 
-// TODO: remove when using proper queues.
 type mappedChans struct {
 	m sync.Map // map of models.Build.RepoFullName to chan *models.Build
 }
