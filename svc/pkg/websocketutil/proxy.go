@@ -30,7 +30,7 @@ func IsWebsocketRequest(req *http.Request) bool {
 	return upgradeWebsocket
 }
 
-// Proxy returns a http.Handler capable of forwaring Websocket connections.
+// Proxy returns a http.Handler capable of forwarding Websocket connections.
 func Proxy(target string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		d, err := net.Dial("tcp", target)
