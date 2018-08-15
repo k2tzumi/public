@@ -43,6 +43,13 @@ func Checkout(ctx context.Context, cloneURL, repoDir, commit string) error {
 	if err != nil {
 		return errors.E(err, "cannot fetch objects")
 	}
+	cmd = exec.CommandContext(ctx, "git", "clean", "-X", "-f", "-f")
+	cmd.Dir = repoDir
+	out, err = cmd.CombinedOutput()
+	log.Println("fetching objects", string(out))
+	if err != nil {
+		return errors.E(err, "cannot clean workspace")
+	}
 	cmd = exec.CommandContext(ctx, "git", "reset", "--hard", commit)
 	cmd.Dir = repoDir
 	out, err = cmd.CombinedOutput()
