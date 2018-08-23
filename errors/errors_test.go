@@ -195,3 +195,37 @@ func TestRootCause(t *testing.T) {
 		t.Error("failed to ignore nil error:")
 	}
 }
+
+func TestTrap(t *testing.T) {
+	var (
+		aErr = E("error A")
+		a    = func() (int, int, error) {
+			return 0, 0, aErr
+		}
+		bErr error
+		b    = func() int {
+			return 0
+		}
+		cErr = E("error C")
+		c    = func() error {
+			return cErr
+		}
+		dErr error
+		d    = func() error {
+			return dErr
+		}
+	)
+
+	if err := Trap(a()); err != aErr {
+		t.Errorf("untrapped error - case a: %v", err)
+	}
+	if err := Trap(b()); err != bErr {
+		t.Errorf("untrapped error - case b: %v", err)
+	}
+	if err := Trap(c()); err != cErr {
+		t.Errorf("untrapped error - case c: %v", err)
+	}
+	if err := Trap(d()); err != dErr {
+		t.Errorf("untrapped error - case d: %v", err)
+	}
+}
