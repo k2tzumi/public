@@ -471,3 +471,13 @@ func Wrapf(err error, msg string, args ...interface{}) error {
 
 	return E(err, Op(fmt.Sprintf(msg, args...)))
 }
+
+// Trap can take any function whose last returned value is an error, and return
+// it exclusively.
+func Trap(values ...interface{}) error {
+	v := values[len(values)-1]
+	if err, ok := v.(error); ok {
+		return err
+	}
+	return nil
+}
