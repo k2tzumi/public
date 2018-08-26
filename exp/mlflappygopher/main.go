@@ -54,7 +54,14 @@ func run() error {
 
 	time.Sleep(1 * time.Second)
 
-	s, err := newScene(r)
+	b, err := newBird(r)
+	if err != nil {
+		return fmt.Errorf("could not create bird: %v", err)
+	}
+
+	ai := newAI(b)
+
+	s, err := newScene(r, b, ai)
 	if err != nil {
 		return fmt.Errorf("could not create scene: %v", err)
 	}

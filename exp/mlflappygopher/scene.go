@@ -18,25 +18,21 @@ import (
 	"log"
 	"time"
 
-	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/img"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type scene struct {
 	bg    *sdl.Texture
 	bird  *bird
 	pipes *pipes
+	ai    *ai
 }
 
-func newScene(r *sdl.Renderer) (*scene, error) {
+func newScene(r *sdl.Renderer, b *bird, ai *ai) (*scene, error) {
 	bg, err := img.LoadTexture(r, "res/imgs/background.png")
 	if err != nil {
 		return nil, fmt.Errorf("could not load background image: %v", err)
-	}
-
-	b, err := newBird(r)
-	if err != nil {
-		return nil, err
 	}
 
 	ps, err := newPipes(r)
@@ -44,7 +40,7 @@ func newScene(r *sdl.Renderer) (*scene, error) {
 		return nil, err
 	}
 
-	return &scene{bg: bg, bird: b, pipes: ps}, nil
+	return &scene{bg: bg, bird: b, pipes: ps, ai: ai}, nil
 }
 
 func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
@@ -95,6 +91,8 @@ func (s *scene) update() {
 	s.bird.update()
 	s.pipes.update()
 	s.pipes.touch(s.bird)
+	dx, dy := s.bird.distance(s.pipes.closestPipe())
+	s.ai.feedInputLayer(dx, dy)
 }
 
 func (s *scene) restart() {
