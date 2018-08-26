@@ -98,6 +98,7 @@ func (s *scene) update() {
 func (s *scene) restart() {
 	s.bird.restart()
 	s.pipes.restart()
+	s.ai.iterate()
 }
 
 func (s *scene) paint(r *sdl.Renderer) error {
