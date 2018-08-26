@@ -40,8 +40,9 @@ func (ai *ai) iterate() {
 }
 
 type round struct {
-	start    time.Time
-	duration time.Duration
+	start     time.Time
+	duration  time.Duration
+	neuralNet neuralNet
 
 	// TODO: add neural net info.
 }
