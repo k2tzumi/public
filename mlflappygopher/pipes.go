@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/img"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type pipes struct {
@@ -103,6 +103,30 @@ func (ps *pipes) destroy() {
 	defer ps.mu.Unlock()
 
 	ps.texture.Destroy()
+}
+
+func (ps *pipes) closestPipe() *pipe {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
+	if len(ps.pipes) == 0 {
+		return nil
+	}
+	for _, p := range ps.pipes {
+		p.mu.Lock()
+		x, h, w, inverted := p.x, p.h, p.w, p.inverted
+		p.mu.Unlock()
+		if x < 0 {
+			continue
+		}
+		return &pipe{
+			x:        x,
+			h:        h,
+			w:        w,
+			inverted: inverted,
+		}
+	}
+	return nil
 }
 
 type pipe struct {

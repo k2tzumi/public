@@ -17,8 +17,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/img"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 const (
@@ -125,4 +125,19 @@ func (b *bird) touch(p *pipe) {
 	}
 
 	b.dead = true
+}
+
+func (b *bird) distance(p *pipe) (dx, dy int32) {
+	if p == nil {
+		return -1, -1
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	dx = p.x - (b.x + b.w)
+	dy = p.h - (b.y - b.h/2)
+	if p.inverted {
+		dy = 600 - p.h - (b.y + b.h/2)
+	}
+	return dx, dy
 }
