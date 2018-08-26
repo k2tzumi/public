@@ -1,7 +1,10 @@
 package main
 
 import (
+	"math/rand"
 	"time"
+
+	"github.com/sjwhitworth/golearn/neural"
 )
 
 type ai struct {
@@ -41,4 +44,53 @@ type round struct {
 	duration time.Duration
 
 	// TODO: add neural net info.
+}
+
+const (
+	inputLayer   = 2
+	hiddenLayer1 = 6
+	hiddenLayer2 = 6
+	output       = 1
+
+	totalNodes = inputLayer + hiddenLayer1 + hiddenLayer2 + output
+)
+
+type weight struct {
+	src, dst int
+	w        float64
+}
+type neuralNet struct {
+	weights []weight
+}
+
+func newRandomNetwork() *neuralNet {
+	nn := &neuralNet{}
+
+	for j := 1; j <= inputLayer; j++ {
+		for i := inputLayer + 1; i <= inputLayer+hiddenLayer1; i++ {
+			nn.weights = append(nn.weights, weight{src: j, dst: i, w: rand.Float64()})
+		}
+	}
+
+	for j := inputLayer + 1; j <= inputLayer+hiddenLayer1; j++ {
+		for i := inputLayer + hiddenLayer1 + 1; i <= inputLayer+hiddenLayer1+hiddenLayer2; i++ {
+			nn.weights = append(nn.weights, weight{src: j, dst: i, w: rand.Float64()})
+		}
+	}
+
+	for j := inputLayer + hiddenLayer1 + 1; j <= inputLayer+hiddenLayer1+hiddenLayer2; j++ {
+		for i := inputLayer + hiddenLayer1 + hiddenLayer2 + 1; i <= inputLayer+hiddenLayer1+hiddenLayer2+output; i++ {
+			nn.weights = append(nn.weights, weight{src: j, dst: i, w: rand.Float64()})
+		}
+	}
+
+	return nn
+}
+
+func (nn *neuralNet) create() *neural.Network {
+	n := neural.NewNetwork(totalNodes, inputLayer, neural.Sigmoid)
+	for _, w := range nn.weights {
+		n.SetWeight(w.src, w.dst, w.w)
+	}
+	return n
 }
