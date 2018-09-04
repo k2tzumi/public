@@ -91,8 +91,16 @@ func (s *scene) update() {
 	s.bird.update()
 	s.pipes.update()
 	s.pipes.touch(s.bird)
-	dx, dy := s.bird.distance(s.pipes.closestPipe())
-	s.ai.feedInputLayer(dx, dy)
+	var pipe *pipe
+	for {
+		pipe = s.pipes.closestPipe()
+		if pipe == nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		break
+	}
+	s.ai.feedInputLayer(s.bird.distance(pipe))
 }
 
 func (s *scene) restart() {
