@@ -22,8 +22,10 @@ import (
 )
 
 const (
-	gravity   = 0.1
-	jumpSpeed = 5
+	gravity    = 0.2
+	jumpSpeed  = 4
+	birdWidth  = 50
+	birdHeight = 43
 )
 
 type bird struct {
@@ -48,7 +50,7 @@ func newBird(r *sdl.Renderer) (*bird, error) {
 		}
 		textures = append(textures, texture)
 	}
-	return &bird{textures: textures, x: 10, y: 300, w: 50, h: 43}, nil
+	return &bird{textures: textures, x: 10, y: 300, w: birdWidth, h: birdHeight}, nil
 }
 
 func (b *bird) update() {
@@ -57,7 +59,9 @@ func (b *bird) update() {
 
 	b.time++
 	b.y -= int32(b.speed)
-	if b.y < 0 {
+
+	touchedBottomOrCeiling := b.y < 0 || b.y > windowHeight+b.h
+	if touchedBottomOrCeiling {
 		b.dead = true
 	}
 	b.speed += gravity
@@ -67,7 +71,7 @@ func (b *bird) paint(r *sdl.Renderer) error {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	rect := &sdl.Rect{X: 10, Y: 600 - b.y - b.h/2, W: b.w, H: b.h}
+	rect := &sdl.Rect{X: 10, Y: windowHeight - b.y - b.h/2, W: b.w, H: b.h}
 
 	i := b.time / 10 % len(b.textures)
 	if err := r.Copy(b.textures[i], nil, rect); err != nil {
@@ -120,7 +124,7 @@ func (b *bird) touch(p *pipe) {
 	if !p.inverted && p.h < b.y-b.h/2 { // pipe is too low
 		return
 	}
-	if p.inverted && 600-p.h > b.y+b.h/2 { // inverted pipe is too high
+	if p.inverted && windowHeight-p.h > b.y+b.h/2 { // inverted pipe is too high
 		return
 	}
 
@@ -128,16 +132,14 @@ func (b *bird) touch(p *pipe) {
 }
 
 func (b *bird) distance(p *pipe) (dx, dy int32) {
-	if p == nil {
-		return -1, -1
-	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	dx = p.x - (b.x + b.w)
-	dy = p.h - (b.y - b.h/2)
+	dy = (b.y - b.h) - p.h
 	if p.inverted {
-		dy = 600 - p.h - (b.y + b.h/2)
+		dy = b.y - (windowHeight - p.h) + (5 * birdHeight / 2)
 	}
+
 	return dx, dy
 }
