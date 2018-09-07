@@ -2,6 +2,8 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc h1:cAKDfWh5Vpd
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/aws/aws-sdk-go v1.14.22 h1:iCZalGjMaunhZJv294y95uhruhnNwkslN3ADCvluN94=
 github.com/aws/aws-sdk-go v1.14.22/go.mod h1:ZRmQr0FajVIyZ4ZzBYKG5P3ZqPz9IHG41ZoMu1ADI3k=
+github.com/buildkite/go-buildkite v2.1.0+incompatible h1:3rUh5qIjFUIXfuttlZ+skYpk0I5943fLw+dHl1OHToc=
+github.com/buildkite/go-buildkite v2.1.0+incompatible/go.mod h1:WTV0aX5KnQ9ofsKMg2CLUBLJNsQ0RwOEKPhrXXZWPcE=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgrijalva/jwt-go v0.0.0-20180309000000-06ea1031745c h1:LnqW56R184pj0hxdehlz4m5H9Aqx5Z4u7NJm9XQaw14=
