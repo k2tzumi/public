@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -33,20 +31,21 @@ func main() {
 			log.Fatalf("client config failed: %s", err)
 		}
 		client := buildkite.NewClient(config.Client())
-		builds, _, err := client.Builds.List(&buildkite.BuildsListOptions{
-			CreatedFrom: time.Now().Add(-24 * time.Hour),
-			State: []string{
-				"running", "scheduled",
-			},
-		})
-		if err != nil {
-			log.Fatalf("list builds failed: %s", err)
+		for {
+			builds, _, err := client.Builds.List(&buildkite.BuildsListOptions{
+				CreatedFrom: time.Now().Add(-24 * time.Hour),
+				State: []string{
+					"running", "scheduled",
+				},
+			})
+			if err != nil {
+				log.Fatalf("list builds failed: %s", err)
+			}
+			if len(builds) == 0 {
+				break
+			}
+			time.Sleep(time.Second)
 		}
-		data, err := json.MarshalIndent(builds, "", "\t")
-		if err != nil {
-			log.Fatalf("json encode failed: %s", err)
-		}
-		fmt.Fprintf(os.Stdout, "%s", string(data))
 		return nil
 	}
 
