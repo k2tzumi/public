@@ -15,10 +15,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
+
+	"cirello.io/errors"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // From ./src-c/uqm-0.7.0-1/src/uqm/supermelee/netplay/packet.h
@@ -35,6 +39,16 @@ func parsePackets(dir string, r io.Reader) (string, error) {
 	r.Read(bodyBuf)
 	ret += fmt.Sprintf("%s: %s\n", dir, hex.Dump(bodyBuf))
 	ret += "----\n"
+
+	switch ph.PacketType {
+	case PacketTypeTeamname:
+		err := parsePacketTeamName(bodyBuf)
+		spew.Dump("err PacketTypeTeamname:", err)
+	case PacketTypeFleet:
+		out, err := parsePacketFleet(bodyBuf)
+		spew.Dump("err PacketTypeFleet:", err)
+		ret += out + "\n----\n"
+	}
 	return ret, nil
 }
 
@@ -45,74 +59,85 @@ type packetHeader struct {
 	PacketType PacketType
 }
 
-type basePacket struct {
-	header packetHeader
+type packetTeamName struct {
+	// header packetHeader
+	fixed struct {
+		Side    netplaySide
+		Padding uint8
+	}
+	dynamic struct {
+		// '\0' terminated.
+		// Be sure to add padding to this structure to make it a
+		// multiple of 4 bytes in length.
+		Name []byte
+	}
 }
 
-type PacketType uint16
-
-const (
-	PacketInit PacketType = iota
-	PacketPing
-	PacketAck
-	PacketReady
-	PacketFleet
-	PacketTeamname
-	PacketHandshake0
-	PacketHandshake1
-	PacketHandshakecancel
-	PacketHandshakecancelack
-	PacketSeedrandom
-	PacketInputdelay
-	PacketSelectship
-	PacketBattleinput
-	PacketFramecount
-	PacketChecksum
-	PacketAbort
-	PacketReset
-	PacketNum //Number of packet types
-)
-
-func (p PacketType) String() string {
-	switch p {
-	case PacketInit:
-		return "PacketInit"
-	case PacketPing:
-		return "PacketPing"
-	case PacketAck:
-		return "PacketAck"
-	case PacketReady:
-		return "PacketReady"
-	case PacketFleet:
-		return "PacketFleet"
-	case PacketTeamname:
-		return "PacketTeamname"
-	case PacketHandshake0:
-		return "PacketHandshake0"
-	case PacketHandshake1:
-		return "PacketHandshake1"
-	case PacketHandshakecancel:
-		return "PacketHandshakecancel"
-	case PacketHandshakecancelack:
-		return "PacketHandshakecancelack"
-	case PacketSeedrandom:
-		return "PacketSeedrandom"
-	case PacketInputdelay:
-		return "PacketInputdelay"
-	case PacketSelectship:
-		return "PacketSelectship"
-	case PacketBattleinput:
-		return "PacketBattleinput"
-	case PacketFramecount:
-		return "PacketFramecount"
-	case PacketChecksum:
-		return "PacketChecksum"
-	case PacketAbort:
-		return "PacketAbort"
-	case PacketReset:
-		return "PacketReset"
-	case PacketNum:
-		return "PacketNum"
+func parsePacketTeamName(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var ptn packetTeamName
+	err := binary.Read(r, binary.BigEndian, &ptn.fixed)
+	if err != nil {
+		return errors.E(err, "cannot parse fixed part of team name packet")
 	}
-	return "Unknown"
+	spew.Dump(ptn)
+	return nil
+}
+
+/*
+// Structure describing an update to a player's fleet.
+// TODO: use strings as ship identifiers, instead of numbers,
+// so that adding of new ships doesn't break this.
+typedef struct {
+	PacketHeader header;
+	uint8 side;
+	uint8 padding;
+	uint16 numShips;
+	FleetEntry ships[];
+	// Be sure to add padding to this structure to make it a multiple of
+	// 4 bytes in length.
+} Packet_Fleet;
+typedef struct {
+	uint8 index;  // Position in the fleet
+	uint8 ship;   // Ship type index; actually MeleeShip
+} FleetEntry;
+*/
+type packetFleetEntry struct {
+	Index uint8
+	Ship  ship
+}
+type packetFleet struct {
+	// header packetHeader
+	fixed struct {
+		Side     netplaySide
+		Padding  uint8
+		NumShips uint16
+	}
+	dynamic struct {
+		FleetEntry []packetFleetEntry
+	}
+	// Be sure to add padding to this structure to make it a
+	// multiple of 4 bytes in length.
+}
+
+func parsePacketFleet(buf []byte) (string, error) {
+	r := bytes.NewBuffer(buf)
+	var pf packetFleet
+	err := binary.Read(r, binary.BigEndian, &pf.fixed)
+	if err != nil {
+		return "", errors.E(err, "cannot parse fixed part of fleet packet")
+	}
+	for i := uint16(0); i < pf.fixed.NumShips; i++ {
+		var pfe packetFleetEntry
+		err := binary.Read(r, binary.BigEndian, &pfe)
+		if err != nil {
+			return "", errors.E(err, "cannot parse dynamic part of fleet packet")
+		}
+		pf.dynamic.FleetEntry = append(pf.dynamic.FleetEntry, pfe)
+	}
+	ret := fmt.Sprintf("fleet: %v %v %v %v %v",
+		pf.fixed.Side, pf.fixed.Padding, pf.fixed.NumShips,
+		pf.dynamic.FleetEntry[0].Index, pf.dynamic.FleetEntry[0].Ship,
+	)
+	return ret, nil
 }
