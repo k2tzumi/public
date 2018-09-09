@@ -23,7 +23,7 @@ import (
 
 const (
 	gravity    = 0.2
-	jumpSpeed  = 4
+	jumpSpeed  = 5
 	birdWidth  = 50
 	birdHeight = 40
 )
