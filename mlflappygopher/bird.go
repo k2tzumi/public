@@ -25,7 +25,7 @@ const (
 	gravity    = 0.2
 	jumpSpeed  = 4
 	birdWidth  = 50
-	birdHeight = 43
+	birdHeight = 40
 )
 
 type bird struct {
@@ -121,7 +121,7 @@ func (b *bird) touch(p *pipe) {
 	if p.x+p.w < b.x { // too far left
 		return
 	}
-	birdHead := windowHeight - (b.y + b.h/2 - 1)
+	birdHead := windowHeight - b.y - b.h/2
 	birdFeet := b.y - b.h/2
 	topPipeFoot := windowHeight - p.h - 3*birdHeight
 	bottomPipeHead := p.h
@@ -137,7 +137,7 @@ func (b *bird) distance(p *pipe) (dx, dy int32) {
 	defer b.mu.Unlock()
 
 	dx = p.x - (b.x + b.w)
-	dy = (b.y - b.h - b.h/2) - p.h
+	dy = (b.y - 3/2*b.h) - p.h
 
 	return dx, dy
 }
