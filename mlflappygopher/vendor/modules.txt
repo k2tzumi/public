@@ -1,4 +1,0 @@
-# github.com/veandco/go-sdl2 v0.0.0-20180825083429-557c26dfe834
-github.com/veandco/go-sdl2/img
-github.com/veandco/go-sdl2/sdl
-github.com/veandco/go-sdl2/ttf
