@@ -121,10 +121,11 @@ func (b *bird) touch(p *pipe) {
 	if p.x+p.w < b.x { // too far left
 		return
 	}
-	if !p.inverted && p.h < b.y-b.h/2 { // pipe is too low
-		return
-	}
-	if p.inverted && windowHeight-p.h > b.y+b.h/2 { // inverted pipe is too high
+	birdHead := windowHeight - (b.y + b.h/2 - 1)
+	birdFeet := b.y - b.h/2
+	topPipeFoot := windowHeight - p.h - 3*birdHeight
+	bottomPipeHead := p.h
+	if topPipeFoot < birdHead && birdFeet > bottomPipeHead { // it's between the pipes
 		return
 	}
 
@@ -136,10 +137,7 @@ func (b *bird) distance(p *pipe) (dx, dy int32) {
 	defer b.mu.Unlock()
 
 	dx = p.x - (b.x + b.w)
-	dy = (b.y - b.h) - p.h
-	if p.inverted {
-		dy = b.y - (windowHeight - p.h) + (5 * birdHeight / 2)
-	}
+	dy = (b.y - b.h - b.h/2) - p.h
 
 	return dx, dy
 }
