@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export REPOS="HumorChecker dynamolock errors goherokuname runner supervisor bookmarkd snippetsd cci"
+export REPOS="HumorChecker dynamolock errors goherokuname runner supervisor bookmarkd snippetsd cci mlflappygopher"
 
 for repo in $REPOS
 do
