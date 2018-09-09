@@ -1,3 +1,16 @@
+// Copyright 2017 Google Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to writing, software distributed
+// under the License is distributed on a "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
@@ -11,13 +24,11 @@ import (
 )
 
 type ai struct {
-	bird *bird
-
+	bird              *bird
 	population        []*round
 	currentRound      int
 	currentGeneration int
-
-	count int
+	msgCount          int
 }
 
 func newAI(b *bird) *ai {
@@ -34,10 +45,10 @@ func newAI(b *bird) *ai {
 }
 
 func (ai *ai) feedInputLayer(dx, dy int32) {
-	if ai.count%20 == 0 {
+	if ai.msgCount%20 == 0 {
 		go fmt.Println(ai.currentGeneration, ":", ai.currentRound, ":", dy)
 	}
-	ai.count++
+	ai.msgCount++
 	round := ai.population[ai.currentRound]
 	if round.start.IsZero() {
 		round.start = time.Now()
@@ -57,31 +68,19 @@ func (ai *ai) iterate() {
 		sort.Slice(ai.population, func(i, j int) bool {
 			return ai.population[i].fitness() > ai.population[j].fitness()
 		})
-
 		fmt.Println("generation", ai.currentGeneration, "fitness:")
 		for _, round := range ai.population {
 			fmt.Println(round.fitness())
 		}
-
 		ai.currentGeneration++
 		ai.currentRound = 0
-
-		// TODO: establish mating strategies.
 		pop := ai.population[0:4]
 		pop = append(pop, genCross(pop[0], pop[1])...)
 		pop = append(pop, genCross(pop[0], pop[2])...)
 		pop = append(pop, genCross(pop[0], pop[3])...)
-		// TODO: pop = append(pop, genMutate(pop[0])...)
-		// TODO: pop = append(pop, genMutate(pop[1])...)
 		for i := 0; i < 3; i++ {
-			randNet := newRandomNetwork()
-			round := &round{neuralNet: randNet}
-			pop = append(pop, genCross(pop[0], round)...)
+			pop = append(pop, genFakeMutate(pop[0])...)
 		}
-		// pop = append(pop, genCross(pop[1], pop[2])...)
-		// pop = append(pop, genCross(pop[1], pop[3])...)
-		// pop = append(pop, genCross(pop[2], pop[3])...)
-
 		for i := range pop {
 			pop[i].start = time.Time{}
 			pop[i].duration = 0
@@ -89,7 +88,6 @@ func (ai *ai) iterate() {
 		ai.population = pop
 		fmt.Println("new population size", len(ai.population))
 		fmt.Println("new generation:", ai.currentGeneration)
-
 	}
 }
 
@@ -122,7 +120,6 @@ type neuralNet struct {
 
 func newRandomNetwork() *neuralNet {
 	nn := &neuralNet{}
-
 	for j := 1; j <= inputLayer; j++ {
 		for i := inputLayer + 1; i <= inputLayer+hiddenLayer1; i++ {
 			w := rand.Float64()
@@ -132,7 +129,6 @@ func newRandomNetwork() *neuralNet {
 			nn.weights = append(nn.weights, weight{src: j, dst: i, w: w})
 		}
 	}
-
 	for j := inputLayer + 1; j <= inputLayer+hiddenLayer1; j++ {
 		for i := inputLayer + hiddenLayer1 + 1; i <= inputLayer+hiddenLayer1+hiddenLayer2; i++ {
 			w := rand.Float64()
@@ -142,7 +138,6 @@ func newRandomNetwork() *neuralNet {
 			nn.weights = append(nn.weights, weight{src: j, dst: i, w: w})
 		}
 	}
-
 	for j := inputLayer + hiddenLayer1 + 1; j <= inputLayer+hiddenLayer1+hiddenLayer2; j++ {
 		for i := inputLayer + hiddenLayer1 + hiddenLayer2 + 1; i <= inputLayer+hiddenLayer1+hiddenLayer2+output; i++ {
 			w := rand.Float64()
@@ -152,11 +147,6 @@ func newRandomNetwork() *neuralNet {
 			nn.weights = append(nn.weights, weight{src: j, dst: i, w: w})
 		}
 	}
-
-	// for _, w := range nn.weights {
-	// 	fmt.Println(w.src, "->", w.dst)
-	// }
-	// os.Exit(1)
 	return nn
 }
 
@@ -182,7 +172,6 @@ func genCross(x, y *round) []*round {
 	if len(x.neuralNet.weights) != len(x.neuralNet.weights) {
 		panic("genoma lengths don't match. bug found.")
 	}
-
 	var ret []*round
 	xy := &round{neuralNet: &neuralNet{}}
 	for i := 0; i < len(x.neuralNet.weights); i++ {
@@ -193,7 +182,6 @@ func genCross(x, y *round) []*round {
 		}
 	}
 	ret = append(ret, xy)
-
 	yx := &round{neuralNet: &neuralNet{}}
 	for i := 0; i < len(x.neuralNet.weights); i++ {
 		if i%2 == 0 {
@@ -203,6 +191,10 @@ func genCross(x, y *round) []*round {
 		}
 	}
 	ret = append(ret, yx)
-
 	return ret
+}
+
+func genFakeMutate(x *round) []*round {
+	round := &round{neuralNet: newRandomNetwork()}
+	return genCross(x, round)
 }
