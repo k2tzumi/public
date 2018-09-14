@@ -1,0 +1,9 @@
+language: go
+sudo: false
+go_import_path: cirello.io/bookmarkd
+go:
+  - "1.11"
+env:
+  global:
+    - GO111MODULE=on
+script: make test
