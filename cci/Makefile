@@ -1,12 +1,11 @@
 test:
-	go get -u golang.org/x/vgo
-	vgo test -v ./pkg/...
+	go test -v ./pkg/...
 
 linux:
 	docker run -ti --rm -v $(GOPATH):/go/ \
 		-e CC=gcc \
 		-w /go/src/cirello.io/cci golang \
-		/bin/bash -c 'go get -u golang.org/x/vgo && vgo build -o cci.linux ./cmd/cci'
+		/bin/bash -c 'go build -o cci.linux ./cmd/cci'
 
 local:
-	CC=gcc vgo build -o cci.darwin ./cmd/cci
+	CC=gcc go build -o cci.darwin ./cmd/cci
