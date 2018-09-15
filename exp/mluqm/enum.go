@@ -24,16 +24,16 @@ const (
 	PacketTypeAck
 	PacketTypeReady
 	PacketTypeFleet
-	PacketTypeTeamname
+	PacketTypeTeamName
 	PacketTypeHandshake0
 	PacketTypeHandshake1
-	PacketTypeHandshakecancel
-	PacketTypeHandshakecancelack
-	PacketTypeSeedrandom
-	PacketTypeInputdelay
-	PacketTypeSelectship
-	PacketTypeBattleinput
-	PacketTypeFramecount
+	PacketTypeHandshakeCancel
+	PacketTypeHandshakeCancelAck
+	PacketTypeSeedRandom
+	PacketTypeInputDelay
+	PacketTypeSelectShip
+	PacketTypeBattleInput
+	PacketTypeFrameCount
 	PacketTypeChecksum
 	PacketTypeAbort
 	PacketTypeReset
@@ -52,26 +52,26 @@ func (p PacketType) String() string {
 		return "PacketTypeReady"
 	case PacketTypeFleet:
 		return "PacketTypeFleet"
-	case PacketTypeTeamname:
-		return "PacketTypeTeamname"
+	case PacketTypeTeamName:
+		return "PacketTypeTeamName"
 	case PacketTypeHandshake0:
 		return "PacketTypeHandshake0"
 	case PacketTypeHandshake1:
 		return "PacketTypeHandshake1"
-	case PacketTypeHandshakecancel:
-		return "PacketTypeHandshakecancel"
-	case PacketTypeHandshakecancelack:
-		return "PacketTypeHandshakecancelack"
-	case PacketTypeSeedrandom:
-		return "PacketTypeSeedrandom"
-	case PacketTypeInputdelay:
-		return "PacketTypeInputdelay"
-	case PacketTypeSelectship:
-		return "PacketTypeSelectship"
-	case PacketTypeBattleinput:
-		return "PacketTypeBattleinput"
-	case PacketTypeFramecount:
-		return "PacketTypeFramecount"
+	case PacketTypeHandshakeCancel:
+		return "PacketTypeHandshakeCancel"
+	case PacketTypeHandshakeCancelAck:
+		return "PacketTypeHandshakeCancelAck"
+	case PacketTypeSeedRandom:
+		return "PacketTypeSeedRandom"
+	case PacketTypeInputDelay:
+		return "PacketTypeInputDelay"
+	case PacketTypeSelectShip:
+		return "PacketTypeSelectShip"
+	case PacketTypeBattleInput:
+		return "PacketTypeBattleInput"
+	case PacketTypeFrameCount:
+		return "PacketTypeFrameCount"
 	case PacketTypeChecksum:
 		return "PacketTypeChecksum"
 	case PacketTypeAbort:
