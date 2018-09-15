@@ -41,13 +41,48 @@ func parsePackets(dir string, r io.Reader) (string, error) {
 	ret += "----\n"
 
 	switch ph.PacketType {
-	case PacketTypeTeamname:
-		err := parsePacketTeamName(bodyBuf)
-		spew.Dump("err PacketTypeTeamname:", err)
+	case PacketTypeInit:
+		err := parsePacketInit(bodyBuf)
+		spew.Dump("err PacketTypeInit:", err)
+	case PacketTypePing:
+		err := parsePacketPing(bodyBuf)
+		spew.Dump("err PacketTypePing:", err)
+	case PacketTypeAck:
+		err := parsePacketAck(bodyBuf)
+		spew.Dump("err PacketTypeAck:", err)
+	case PacketTypeReady:
+		err := parsePacketReady(bodyBuf)
+		spew.Dump("err PacketTypeReady:", err)
 	case PacketTypeFleet:
 		out, err := parsePacketFleet(bodyBuf)
 		spew.Dump("err PacketTypeFleet:", err)
 		ret += out + "\n----\n"
+	case PacketTypeTeamName:
+		err := parsePacketTeamName(bodyBuf)
+		spew.Dump("err PacketTypeTeamName:", err)
+	case PacketTypeHandshake0:
+		err := parsePacketHandshake0(bodyBuf)
+		spew.Dump("err PacketTypeHandshake0:", err)
+	case PacketTypeHandshake1:
+		err := parsePacketHandshake1(bodyBuf)
+		spew.Dump("err PacketTypeHandshake1:", err)
+	case PacketTypeHandshakeCancel:
+		err := parsePacketHandshakeCancel(bodyBuf)
+		spew.Dump("err PacketTypeHandshakeCancel:", err)
+	case PacketTypeHandshakeCancelAck:
+		err := parsePacketHandshakeCancelAck(bodyBuf)
+		spew.Dump("err PacketTypeHandshakeCancelAck:", err)
+	case PacketTypeSeedRandom:
+		err := parsePacketSeedRandom(bodyBuf)
+		spew.Dump("err PacketTypeSeedRandom:", err)
+	case PacketTypeInputDelay:
+		err := parsePacketInputDelay(bodyBuf)
+		spew.Dump("err PacketTypeInputDelay:", err)
+	case PacketTypeSelectShip:
+		err := parsePacketSelectShip(bodyBuf)
+		spew.Dump("err PacketTypeSelectShip:", err)
+	default:
+		spew.Dump("unknown packet:", ph.PacketType)
 	}
 	return ret, nil
 }
@@ -57,6 +92,102 @@ const packetHeaderLength = 4
 type packetHeader struct {
 	Length     uint16
 	PacketType PacketType
+}
+
+type packetInit struct {
+	// header packetHeader
+	ProtoVersionMajor uint8
+	ProtoVersionMinor uint8
+	Padding0          uint16
+	UqmVersionMajor   uint8
+	UqmVersionMinor   uint8
+	UqmVersionPatch   uint8
+	Padding1          uint8
+}
+
+func parsePacketInit(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetInit
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse init packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetPing struct {
+	// header packetHeader
+	ID uint32
+}
+
+func parsePacketPing(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetPing
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse ping packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetAck struct {
+	// header packetHeader
+	ID uint32
+}
+
+func parsePacketAck(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetAck
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse ack packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetReady struct {
+	// header packetHeader
+	// no contents.
+}
+
+func parsePacketReady(buf []byte) error {
+	spew.Dump("READY")
+	return nil
+}
+
+type packetSeedRandom struct {
+	// header packetHeader
+	Seed uint32
+}
+
+func parsePacketSeedRandom(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetSeedRandom
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse seed random packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetInputDelay struct {
+	// header packetHeader
+	Delay uint32
+}
+
+func parsePacketInputDelay(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetInputDelay
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse input delay packet")
+	}
+	spew.Dump(p)
+	return nil
 }
 
 type packetTeamName struct {
@@ -140,4 +271,48 @@ func parsePacketFleet(buf []byte) (string, error) {
 		pf.dynamic.FleetEntry[0].Index, pf.dynamic.FleetEntry[0].Ship,
 	)
 	return ret, nil
+}
+
+type packetHandshake0 struct{}
+
+func parsePacketHandshake0(buf []byte) error {
+	spew.Dump("packetHandshake0")
+	return nil
+}
+
+type packetHandshake1 struct{}
+
+func parsePacketHandshake1(buf []byte) error {
+	spew.Dump("acketHandshake1")
+	return nil
+}
+
+type packetHandshakeCancel struct{}
+
+func parsePacketHandshakeCancel(buf []byte) error {
+	spew.Dump("packetHandshakeCancel")
+	return nil
+}
+
+type packetHandshakeCancelAck struct{}
+
+func parsePacketHandshakeCancelAck(buf []byte) error {
+	spew.Dump("packetHandshakeCancelAck")
+	return nil
+}
+
+type packetSelectShip struct {
+	Ship    uint16
+	Padding uint16
+}
+
+func parsePacketSelectShip(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetSelectShip
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse select ship packet")
+	}
+	spew.Dump(p)
+	return nil
 }
