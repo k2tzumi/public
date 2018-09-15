@@ -81,6 +81,21 @@ func parsePackets(dir string, r io.Reader) (string, error) {
 	case PacketTypeSelectShip:
 		err := parsePacketSelectShip(bodyBuf)
 		spew.Dump("err PacketTypeSelectShip:", err)
+	case PacketTypeBattleInput:
+		err := parsePacketBattleInput(bodyBuf)
+		spew.Dump("err case PacketTypeBattleInput:", err)
+	case PacketTypeFrameCount:
+		err := parsePacketFrameCount(bodyBuf)
+		spew.Dump("err case PacketTypeFrameCount:", err)
+	case PacketTypeChecksum:
+		err := parsePacketChecksum(bodyBuf)
+		spew.Dump("err case PacketTypeChecksum:", err)
+	case PacketTypeAbort:
+		err := parsePacketAbort(bodyBuf)
+		spew.Dump("err case PacketTypeAbort:", err)
+	case PacketTypeReset:
+		err := parsePacketReset(bodyBuf)
+		spew.Dump("err case PacketTypeReset:", err)
 	default:
 		spew.Dump("unknown packet:", ph.PacketType)
 	}
@@ -312,6 +327,86 @@ func parsePacketSelectShip(buf []byte) error {
 	err := binary.Read(r, binary.BigEndian, &p)
 	if err != nil {
 		return errors.E(err, "cannot parse select ship packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetBattleInput struct {
+	State    uint8 /* Actually BATTLE_INPUT_STATE */
+	Padding0 uint8
+	Padding1 uint16
+}
+
+func parsePacketBattleInput(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetBattleInput
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse battle input packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetFrameCount struct {
+	FrameCount uint32 /* Actually BattleFrameCounter */
+}
+
+func parsePacketFrameCount(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetFrameCount
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse frame count packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetChecksum struct {
+	FrameNr  uint32 /* Actually BattleFrameCounter */
+	Checksum uint32 /* Actually Checksum */
+}
+
+func parsePacketChecksum(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetChecksum
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse checksum packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetAbort struct {
+	Reason   uint16 /* Actually NetplayAbortReason */
+	Padding0 uint16
+}
+
+func parsePacketAbort(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetAbort
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse abort packet")
+	}
+	spew.Dump(p)
+	return nil
+}
+
+type packetReset struct {
+	Reason   uint16 /* Actually NetplayResetReason */
+	Padding0 uint16
+}
+
+func parsePacketReset(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	var p packetReset
+	err := binary.Read(r, binary.BigEndian, &p)
+	if err != nil {
+		return errors.E(err, "cannot parse reset packet")
 	}
 	spew.Dump(p)
 	return nil
