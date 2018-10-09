@@ -1,0 +1,115 @@
+State of Go for Business
+H2 2018
+
+
+https://github.com/ucirello/
+
+: I want to talk 20m, then review some business Go code, then open for Q&A.
+
+* More Gophers beyond Googlers
+
+.image gophers-rate.png 500 _
+.caption Asymptotically bigger than Google
+
+* More Funding
+
+.image hiring.png 500 _
+.caption More people in the Go Core Team
+
+: Go Team is growing - lots of focus in the Runtime performance.
+
+* Popularity
+
+.image tiobe.png 500 _
+.caption Two time Language of the Year by Tiobe Index
+
+: Twice language of the year - Tiobe is perhaps the most popular Lang Rank.
+
+* Diversity of Companies using Go
+
+https://github.com/golang/go/wiki/SuccessStories
+
+https://github.com/golang/go/wiki/GoUsers
+
+* Are these all infrastructure applications? - Personal Anecdote
+
+- Easytobook - infrastructure first - overcoming the limitations of PHP
+- Hotelspecials - real business - hotel reservation as core product
+- Iron.io - IT as the core product
+- strongDM - security as the core product
+
+: Iron.io - the application was in Go, but the infra was in Ruby (simpleDeployer)
+
+* Hiring - Sources
+
+.image exodus.png 500 _
+
+: Funny fact - Oracle is using Go to make their cloud functions service. Fn Project.
+: Oracle... The owner of Java.
+
+* Hiring - Phases
+
+- Not used internally
+- Used internally and not recruiting
+- Used internally and recruiting by proxy
+- Recruiting openly
+
+Go is transitioning from Recruiting by Proxy to Recruiting Openly
+
+https://www.welovegolang.com/
+https://www.golangprojects.com/
+
+* Hiring
+
+.image hnhiring.png _ 1000
+.caption Go overtook PHP and it is on its way to overtake Javascript in YC's Hacker News Hiring.
+
+: New startups are trusting Go to be able to deliver their learning cycles - for them time is precious and the fact the Go is a strong typed language does not seem to matter.
+
+* Take away from Business Perspective
+
+: Go has passed the point in which there are a lot of players invested in its success. It is not going to disappear anytime soon.
+
+* Code
+
+* Friendly Quickstart
+
+.code http-mini.go /^func main/,/^}/
+
+: this quickstart shows how much you can quickly achieve with Go but it does not tell how to scale code.
+
+* A scale-friendly architecture
+
+.image architecture-overview.png _ 900
+
+: Actions - if you get the dependency injection right - are easily testable.
+: Actions - are used for everything, external requests and internal lifecycle needs.
+: Handler - serialize/unserialize requests and responses
+: Router / Inteface - actually handle incoming requests
+
+* Source code organization
+
+	/ (root)
+		pkg/
+			models/
+			generated/ or embed/
+			actions/
+			handlers/
+				http/
+				grpc/
+				router.go
+		cmd/
+			app/main.go
+			microservice-alpha/main.go
+			microservice-beta/main.go
+			microservice-etc/main.go
+		frontend/
+		vendor/ or go.mod
+
+: This is an organization used by many projects - open and closed. In my current job, that is also the organization we use.
+: pkg holds all the logic specific and reflects how your business is organized. cmd holds the applications binaries entry-points
+: frontend - the HTML/JS application that you can embed in your application. vendor - where you place your dependencies; now being deprecated in favor of go.mod
+
+* Let's see some real code
+
+: I am going to show you one opensource application I wrote following this organization.
