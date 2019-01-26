@@ -50,3 +50,4 @@ This SLA applies to all Go packages under the following namespaces:
 with the exception of:
 
 -	`cirello.io/exp/...`
+-	`cirello.io/junk/...`
