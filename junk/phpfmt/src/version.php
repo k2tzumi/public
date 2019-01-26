@@ -1,0 +1,1 @@
+<?php define('VERSION', '825.0');

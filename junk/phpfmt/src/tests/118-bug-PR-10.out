@@ -1,0 +1,8 @@
+<?php
+$related_others = ["${keywords}abc",
+	"${keywords}abcd",
+];
+
+function a() {
+	echo 'a';
+}

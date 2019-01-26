@@ -1,0 +1,7 @@
+<?php
+return [
+	new SomeClass(
+		new \ThirdClass([]),
+		'render'
+	),
+];

@@ -1,0 +1,20 @@
+{
+    "name": "phpfmt/fmt",
+    "type": "application",
+    "description": "K&R and phpfmt coding standard",
+    "license": "BSD-3-Clause",
+    "keywords": ["language syntax", "formatter", "formatting", "coding", "style"],
+    "authors": [
+    ],
+    "support": {
+        "issues": "https://github.com/phpfmt/issues/issues",
+        "source": "https://github.com/phpfmt/fmt"
+    },
+    "require":{
+        "php": ">=7.0.0",
+        "ext-tokenizer": "*"
+    },
+    "require-dev": {
+        "ccirello/csp": "3.0.*"
+    }
+}

@@ -1,0 +1,20 @@
+<?php
+abstract class GenericContent {
+	public $delivery_info = [
+	];
+	private $properties = [
+	];
+	protected static $PROPERTIES = [
+		'dummy' => 'shortstr',
+	];
+	public function __construct($props, $prop_types = null) {
+		if ($prop_types) {
+			$this->prop_types = $prop_types;
+		} else {
+			$this->prop_types = self::$PROPERTIES;
+		}
+
+		$d = [
+		];
+	}
+}

@@ -1,0 +1,6 @@
+<?php
+
+[
+	'conditions' => ["{$type}0.alias" => $start],
+];
+?>
