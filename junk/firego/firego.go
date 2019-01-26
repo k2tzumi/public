@@ -14,7 +14,7 @@
 // Check the example to see it working:
 //
 // # go run examples/example.go
-package firego // import "cirello.io/FireGo"
+package firego
 
 //go:generate stringer -type=MessageType
 import (

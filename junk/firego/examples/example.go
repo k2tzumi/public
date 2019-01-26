@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dericofilho/firego"
+	firego "cirello.io/junk/FireGo"
 )
 
 type Application struct {
