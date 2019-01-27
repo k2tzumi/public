@@ -51,3 +51,4 @@ with the exception of:
 
 -	`cirello.io/exp/...`
 -	`cirello.io/junk/...`
+-	`cirello.io/gists/...`

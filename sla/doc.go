@@ -53,5 +53,7 @@ package sla defines the service-level agreement for cirello.io/... packages.
 	with the exception of:
 
 	-	`cirello.io/exp/...`
+	-	`cirello.io/junk/...`
+	-	`cirello.io/gists/...`
 */
 package sla
