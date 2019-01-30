@@ -4,6 +4,7 @@ export REPOS="HumorChecker dynamolock errors goherokuname runner supervisor book
 
 for repo in $REPOS
 do
-	./scripts/push-repo.sh $repo
+	./scripts/push-repo.sh $repo &
 done
 
+wait
