@@ -1,5 +1,0 @@
-workdir: $GOPATH/src/cirello.io/exp/mluqm
-observe: *.go
-ignore: /vendor
-build: restart=always go build
-play:  ./mluqm
