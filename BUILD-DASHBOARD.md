@@ -1,14 +1,14 @@
 Continous Integration Dashboard
 ===============================
 
-|directory   | status |
-|------------|--------|
-|HumorChecker|[![Build Status](https://travis-ci.org/cirello-io/HumorChecker.svg?branch=master)](https://travis-ci.org/cirello-io/HumorChecker)
-|bookmarkd   |[![Build Status](https://travis-ci.org/cirello-io/bookmarkd.svg?branch=master)](https://travis-ci.org/cirello-io/bookmarkd)|
-|cci         |![Build Status](https://badge.cirello.io/badge/ucirello/cci?update)|
-|dynamolock  |[![Build Status](https://travis-ci.org/cirello-io/dynamolock.svg?branch=master)](https://travis-ci.org/cirello-io/dynamolock)|
-|goherokuname|[![Build Status](https://travis-ci.org/cirello-io/goherokuname.svg?branch=master)](https://travis-ci.org/cirello-io/goherokuname)
-|oversight   |[![Build Status](https://travis-ci.org/cirello-io/oversight.svg?branch=master)](https://travis-ci.org/cirello-io/oversight)|
-|pglock      |[![Build Status](https://travis-ci.org/cirello-io/pglock.svg?branch=master)](https://travis-ci.org/cirello-io/pglock)|
-|supervisor  |[![Build Status](https://travis-ci.org/cirello-io/supervisor.svg?branch=master)](https://travis-ci.org/cirello-io/supervisor)|
-|mirroring   |![Build Status](https://badge.cirello.io/badge/ucirello/public?update)|
+|packages   | status                                                                                                                            |coverage|goreportcard|
+|------------|-----------------------------------------------------------------------------------------------------------------------------------|--------|------------|
+|HumorChecker|[![Build Status](https://travis-ci.org/cirello-io/HumorChecker.svg?branch=master)](https://travis-ci.org/cirello-io/HumorChecker)  |[![gocover.io](https://gocover.io/_badge/cirello.io/HumorChecker)](https://gocover.io/cirello.io/HumorChecker)|[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/HumorChecker)](https://goreportcard.com/report/github.com/cirello-io/HumorChecker)|
+|bookmarkd   |[![Build Status](https://travis-ci.org/cirello-io/bookmarkd.svg?branch=master)](https://travis-ci.org/cirello-io/bookmarkd)        ||[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/bookmarkd)](https://goreportcard.com/report/github.com/cirello-io/bookmarkd)|
+|cci         |![Build Status](https://badge.cirello.io/badge/ucirello/cci?update)                                                                ||[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/cci)](https://goreportcard.com/report/github.com/cirello-io/cci)|
+|dynamolock  |[![Build Status](https://travis-ci.org/cirello-io/dynamolock.svg?branch=master)](https://travis-ci.org/cirello-io/dynamolock)      |[![Coverage Status](https://coveralls.io/repos/github/cirello-io/dynamolock/badge.svg?branch=master)](https://coveralls.io/github/cirello-io/dynamolock?branch=master)|[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/dynamolock)](https://goreportcard.com/report/github.com/cirello-io/dynamolock)|
+|goherokuname|[![Build Status](https://travis-ci.org/cirello-io/goherokuname.svg?branch=master)](https://travis-ci.org/cirello-io/goherokuname)  |[![gocover.io](https://gocover.io/_badge/cirello.io/goherokuname)](https://gocover.io/cirello.io/goherokuname)|[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/goherokuname)](https://goreportcard.com/report/github.com/cirello-io/goherokuname)|
+|oversight   |[![Build Status](https://travis-ci.org/cirello-io/oversight.svg?branch=master)](https://travis-ci.org/cirello-io/oversight)        |[![gocover.io](https://gocover.io/_badge/cirello.io/oversight)](https://gocover.io/cirello.io/oversight)|[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/oversight)](https://goreportcard.com/report/github.com/cirello-io/oversight)|
+|pglock      |[![Build Status](https://travis-ci.org/cirello-io/pglock.svg?branch=master)](https://travis-ci.org/cirello-io/pglock)              |[![Coverage Status](https://coveralls.io/repos/github/cirello-io/pglock/badge.svg?branch=master)](https://coveralls.io/github/cirello-io/pglock?branch=master)|[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/pglock)](https://goreportcard.com/report/github.com/cirello-io/pglock)|
+|supervisor  |[![Build Status](https://travis-ci.org/cirello-io/supervisor.svg?branch=master)](https://travis-ci.org/cirello-io/supervisor)      |[![gocover.io](https://gocover.io/_badge/cirello.io/supervisor)](https://gocover.io/cirello.io/supervisor)|[![Go Report Card](https://goreportcard.com/badge/github.com/cirello-io/supervisor)](https://goreportcard.com/report/github.com/cirello-io/supervisor)|
+|mirroring   |![Build Status](https://badge.cirello.io/badge/cirello-io/public?update)                                                             |
