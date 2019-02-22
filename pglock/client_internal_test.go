@@ -24,53 +24,53 @@ import (
 	"net"
 	"testing"
 
-	"cirello.io/errors"
 	"github.com/lib/pq"
+	"golang.org/x/xerrors"
 )
 
 func TestTypedError(t *testing.T) {
 	errs := []struct {
-		err   error
-		typed bool
+		err          error
+		expectedType error
 	}{
-		{fmt.Errorf("random error"), false},
-		{sql.ErrNoRows, true},
-		{&net.OpError{}, true},
-		{&pq.Error{}, true},
-		{&pq.Error{Code: "40001"}, true},
+		{fmt.Errorf("random error"), nil},
+		{sql.ErrNoRows, ErrNotExist},
+		{&net.OpError{}, ErrUnavailable},
+		{&pq.Error{}, nil},
+		{&pq.Error{Code: "40001"}, ErrFailedPrecondition},
 	}
 	for _, err := range errs {
 		if err.err == nil {
 			continue
 		}
-		typeErr := typedError(err.err)
-		e, ok := typeErr.(*errors.Error)
-		if !ok {
+		typedErr := typedError(err.err, "")
+		if err.expectedType == nil {
+			if typedErr == nil {
+				t.Errorf("unexpected nil error: %#v", typedErr)
+			}
 			continue
-		}
-		if err.typed && e.Kind == errors.Other {
-			t.Errorf("untyped error found: %#v", e)
-		} else if !err.typed && e.Kind != errors.Other {
-			t.Errorf("mistyped error found: %#v", e)
+		} else if !xerrors.Is(typedErr, err.expectedType) {
+			t.Errorf("untyped error found: %#v", typedErr)
 		}
 	}
 }
 
 func TestRetry(t *testing.T) {
 	t.Run("type check", func(t *testing.T) {
+		internal := xerrors.New("internal")
 		c := &Client{
 			log: &testLogger{t},
 		}
 		errs := []error{
-			errors.E(errors.FailedPrecondition, "failed precondition"),
-			errors.E(errors.Internal, "other error"),
+			xerrors.Errorf("failed precondition: %w", ErrFailedPrecondition),
+			xerrors.Errorf("other error: %w", internal),
 		}
 		err := c.retry(func() error {
 			var err error
 			err, errs = errs[0], errs[1:]
 			return err
 		})
-		if !errors.Is(errors.Internal, err) {
+		if !xerrors.Is(err, internal) {
 			t.Fatal("unexpected error kind found")
 		}
 	})
@@ -81,9 +81,9 @@ func TestRetry(t *testing.T) {
 		var retries int
 		err := c.retry(func() error {
 			retries++
-			return errors.E(errors.FailedPrecondition, "failed precondition")
+			return xerrors.Errorf("failed precondition: %w", ErrFailedPrecondition)
 		})
-		if !errors.Is(errors.FailedPrecondition, err) {
+		if !xerrors.Is(err, ErrFailedPrecondition) {
 			t.Fatal("unexpected error kind found")
 		}
 		if retries != maxRetries {
