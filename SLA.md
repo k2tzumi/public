@@ -37,7 +37,7 @@ Go Version
 
 -	**Current stable Go version only**
 
-	Quoting @shurcooL _ipsis literis_:
+	Quoting @shurcooL _ipsis litteris_:
 	> Current stable Go version is supported. Previous versions may work, but aren't guaranteed to. I don't go out of my way to break support for previous versions, but I don't hold back on using new features from current stable Go version.
 
 Applicability
