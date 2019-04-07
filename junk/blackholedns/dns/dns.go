@@ -14,7 +14,7 @@
 
 // Package dns implements a simple DNS forwarder that divert undesired requests
 // to blackhole.
-package dns // import "cirello.io/blackholedns/dns"
+package dns // import "cirello.io/junk/blackholedns/dns"
 
 import (
 	"fmt"

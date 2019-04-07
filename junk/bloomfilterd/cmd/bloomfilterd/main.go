@@ -1,4 +1,4 @@
-package main // import "cirello.io/bloomfilterd/cmd/bloomfilterd"
+package main // import "cirello.io/junk/bloomfilterd/cmd/bloomfilterd"
 
 import (
 	"flag"

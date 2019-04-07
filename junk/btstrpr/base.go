@@ -1,4 +1,4 @@
-package btstrpr // import "cirello.io/btstrpr"
+package btstrpr // import "cirello.io/junk/btstrpr"
 
 import (
 	"bytes"

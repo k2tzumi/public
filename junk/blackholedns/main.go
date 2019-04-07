@@ -14,7 +14,7 @@
 
 // Command blackholedns implements a simple DNS daemon that diverts undesired
 // requests to blackhole.
-package main // import "cirello.io/blackholedns"
+package main // import "cirello.io/junk/blackholedns"
 
 import (
 	"bufio"

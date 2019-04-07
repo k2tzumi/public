@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Command leitner is a spaced repetition service based on Leitner's algorithm.
-package main // import "cirello.io/leitner"
+package main // import "cirello.io/exp/leitner"
 
 import (
 	"encoding/json"
